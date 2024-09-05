@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import TypeVar, List, Callable, Generic, Tuple
+from abc import *
 
 T = TypeVar("T")
 
@@ -25,6 +26,11 @@ class FieldWrapper(Generic[T]):
     def set_error_handler(self, handler: Callable[[T], None]) -> None:
         self.__error_handler = handler
 
+class SelectableEntity(ABC):
+
+    @abstractmethod
+    def get_selection_key(self) -> str:
+        pass
 
 class CustomerAddEntity:
 
@@ -78,11 +84,13 @@ class CustomerEditEntity(CustomerAddEntity):
         return self.__customer_id.get_value()
     
 
-class CustomerViewEntity(CustomerEditEntity):
+class CustomerViewEntity(CustomerEditEntity, SelectableEntity):
 
     def __init__(self, id: int, name: str, balance: Decimal) -> None:
         super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](balance, None))
 
+    def get_selection_key(self) -> str:
+        return "{0}(ID:{1})".format(self.get_customer_name(), self.get_customer_id())
 
 class ProductAddEntity:
 
@@ -136,7 +144,10 @@ class ProductEditEntity(ProductAddEntity):
         return self.__product_id.get_value()
 
 
-class ProductViewEntity(ProductEditEntity):
+class ProductViewEntity(ProductEditEntity, SelectableEntity):
 
     def __init__(self, id: int, name: str, price: Decimal) -> None:
         super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](price, None))
+
+    def get_selection_key(self) -> str:
+        return "{0}(ID:{1})".format(self.get_product_name(), self.get_product_id())

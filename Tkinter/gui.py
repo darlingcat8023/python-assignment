@@ -175,7 +175,7 @@ class CreateOrderFrame(BaseFrame):
 
         label = Label(customer_select_frame, text = "Please select a customer :")
         label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: handler.all_customers(), lambda c: "{0}(ID:{1})".format(c.get_customer_name(), c.get_customer_id()))
+        customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: handler.all_customers())
         customer_select_box.get_load_subject().on_next(None)
         customer_text_box = BaseTextBox(customer_show_frame)
         customer_select_box.get_selected_subject().pipe(
@@ -196,7 +196,7 @@ class CreateOrderFrame(BaseFrame):
 
         label = Label(product_select_frame, text = "Please select a product :")
         label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame, lambda: handler.list_all_customers(), lambda c: "{0}(ID:{1})".format(c.get_customer_name(), c.get_customer_id()))
+        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame, lambda: handler.all_products())
         product_select_box.get_load_subject().on_next(None)
         product_text_box = BaseTextBox(product_show_frame)
 

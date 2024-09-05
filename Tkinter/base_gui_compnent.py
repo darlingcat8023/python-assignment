@@ -5,6 +5,7 @@ from reactivex import operators, Observable
 from reactivex.subject import *
 import abc, handler, page, customer, math, reactivex
 from decimal import Decimal
+from view_model import *
 
 ## TypeVar used in some comenents for the type restriction
 T = TypeVar("T")
@@ -290,14 +291,15 @@ class LabelEntryPair(BaseFrame):
     def set_tip(self, tip: str) -> None:
         self.__tip_label.config(text = tip, fg = "red", anchor = W)
 
+S = TypeVar("S", bound = SelectableEntity)
 
-class PrefixSearchCombobox(ttk.Combobox, Generic[T]):
+class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
 
     __selected_subject: Subject
     __load_data_subject: Subject
-    __data_dict: Dict[str, T]
+    __data_dict: Dict[str, S]
 
-    def __init__(self, parent_frame: BaseFrame, data_function: Callable[[None], Observable[List[T]]], key_mapper: Callable[[T], str]) -> None:
+    def __init__(self, parent_frame: BaseFrame, data_function: Callable[[None], Observable[List[S]]]) -> None:
         super().__init__(parent_frame)
         selected_subject, load_subject = Subject(), Subject()
         self.__selected_subject, self.__load_data_subject, self.__data_dict = selected_subject, load_subject, {}
@@ -319,7 +321,7 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[T]):
         load_subject.pipe(
             operators.do_action(lambda _ : self.__data_dict.clear()),
             operators.flat_map(lambda _: data_function()),
-            operators.map(lambda list: {key_mapper(item): item for item in list}),
+            operators.map(lambda list: {item.get_selection_key(): item for item in list}),
             operators.do_action(lambda dicts : self.__data_dict.update(dicts))
         ).subscribe(lambda dicts: self.config(values = list(dicts.keys())))
 
