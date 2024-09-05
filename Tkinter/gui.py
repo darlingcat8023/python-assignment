@@ -291,25 +291,22 @@ class EditCustomerFrame(BaseFrame):
         submit_button = OptionButton(self, "Edit Submit", Subject())
         cancel_button = OptionButton(self, "Edit Cancel", Subject())
 
-        entity = CustomerEditEntity(
-            FieldWrapper[int](data.get_customer_id(), None), 
-            FieldWrapper[str](data.get_customer_name(), lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")), 
-            FieldWrapper[Decimal](data.get_customer_balance(), lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
-        )
+        data.set_name_error_hanlder(lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input"))
+        data.set_balance_error_hanlder(lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
         
         customer_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_name_entry.set_tip(""))
-        ).subscribe(lambda ipt: entity.set_customer_name(ipt))
+        ).subscribe(lambda ipt: data.set_customer_name(ipt))
         
         customer_balance_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_balance_entry.set_tip(""))
         ).subscribe(
-            on_next = lambda ipt: entity.set_customer_balance(MethodInvoker.execute(lambda: Decimal(ipt))),
+            on_next = lambda ipt: data.set_customer_balance(MethodInvoker.execute(lambda: Decimal(ipt))),
             on_error = lambda error: print(f"{error}")
         )
         
         submit_button.get_button_subject().pipe(
-            operators.map(lambda _: entity),
+            operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.edit_customer(entity)),
         ).subscribe(cancel_button.get_button_subject())
@@ -416,25 +413,22 @@ class EditProductFrame(BaseFrame):
         submit_button = OptionButton(self, "Edit Submit", Subject())
         cancel_button = OptionButton(self, "Edit Cancel", Subject())
 
-        entity = ProductEditEntity(
-            FieldWrapper[int](data.get_product_id(), None),
-            FieldWrapper[str](data.get_product_name(), lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
-            FieldWrapper[Decimal](data.get_product_price(), lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
-        )
+        data.set_name_error_hanlder(lambda ipt: product_name_entry.set_tip("Invalid Product Name input"))
+        data.set_price_error_hanlder(lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
         
         product_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_name_entry.set_tip(""))
-        ).subscribe(lambda ipt: entity.set_product_name(ipt))
+        ).subscribe(lambda ipt: data.set_product_name(ipt))
         
         product_price_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_price_entry.set_tip(""))
         ).subscribe(
-            on_next = lambda ipt: entity.set_product_price(MethodInvoker.execute(lambda: Decimal(ipt))),
+            on_next = lambda ipt: data.set_product_price(MethodInvoker.execute(lambda: Decimal(ipt))),
             on_error = lambda error: print(f"{error}")
         )
         
         submit_button.get_button_subject().pipe(
-            operators.map(lambda _: entity),
+            operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.edit_product(entity)),
         ).subscribe(cancel_button.get_button_subject())

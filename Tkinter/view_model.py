@@ -22,6 +22,9 @@ class FieldWrapper(Generic[T]):
     def set_value(self, T) -> None:
         self.__field = T
 
+    def set_error_handler(self, handler: Callable[[T], None]) -> None:
+        self.__error_handler = handler
+
 
 class CustomerAddEntity:
 
@@ -35,8 +38,14 @@ class CustomerAddEntity:
     def set_customer_name(self, customer_name: str) -> None:
         self.__customer_name.set_value(customer_name)
 
+    def set_name_error_hanlder(self, handler: Callable[[str], None]) -> None:
+        self.__customer_name.set_error_handler(handler)
+
     def set_customer_balance(self, customer_balance: Decimal) -> None:
         self.__customer_balance.set_value(customer_balance)
+
+    def set_balance_error_hanlder(self, handler: Callable[[Decimal], None]) -> None:
+        self.__customer_balance.set_error_handler(handler)
 
     def get_customer_name(self) -> str:
         return self.__customer_name.get_value()
@@ -87,8 +96,14 @@ class ProductAddEntity:
     def set_product_name(self, product_name: str) -> None:
         self.__product_name.set_value(product_name)
 
+    def set_name_error_hanlder(self, handler: Callable[[str], None]) -> None:
+        self.__product_name.set_error_handler(handler)
+
     def set_product_price(self, product_price: Decimal) -> None:
         self.__product_price.set_value(product_price)
+
+    def set_price_error_hanlder(self, handler: Callable[[Decimal], None]) -> None:
+        self.__product_price.set_error_handler(handler)
 
     def get_product_name(self) -> str:
         return self.__product_name.get_value()
