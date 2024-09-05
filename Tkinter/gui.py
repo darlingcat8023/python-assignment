@@ -6,6 +6,7 @@ from reactivex.subject import *
 import abc, handler, page, customer, math, reactivex, abstract_interface
 from decimal import Decimal
 from base_gui_compnent import *
+from view_model import *
 
 class MethodInvoker:
 
@@ -211,60 +212,39 @@ class ReactiveCreateNewOrderButton(AbstractMenuButton):
 
 class AddCustomerFrame(BaseFrame):
 
-    class CustomerAddEntity:
-
-        __customer_name: str
-        __customer_balance: Decimal
-
-        def __init__(self) -> None:
-            self.__customer_name = None
-            self.__customer_balance = None
-    
-        def set_customer_name(self, customer_name: str) -> None:
-            self.__customer_name = customer_name
-
-        def set_customer_balance(self, customer_balance: Decimal) -> None:
-            self.__customer_balance = customer_balance
-
-        def get_customer_name(self) -> str:
-            return self.__customer_name
-    
-        def get_customer_balance(self) -> Decimal:
-            return self.__customer_balance
-
-        def is_ready_for_submit(self, customer_name_entry: LabelEntryPair, customer_balance_entry: LabelEntryPair) -> bool:
-            if self.get_customer_name() is None or len(self.get_customer_name()) == 0:
-                customer_name_entry.set_tip("Invalid Customer Name input")
-                return False
-            if self.get_customer_balance() is None:
-                customer_balance_entry.set_tip("Invalid Customer Balance input")
-                return False
-            return True
-
     def __init__(self, frame_holder: FrameHolder, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
         self.draw_compnent(frame_holder, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, callback: Subject) -> None:
-        entity = AddCustomerFrame.CustomerAddEntity()
+        
         customer_name_entry = LabelEntryPair(self, "Customer Name:")
+        customer_balance_entry = LabelEntryPair(self, "Customer Balance:")
+        submit_button = OptionButton(self, "Add Submit", Subject())
+        cancel_button = OptionButton(self, "Add Cancel", Subject())
+
+        entity = CustomerAddEntity(
+            FieldWrapper(None, lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")),
+            FieldWrapper(None, lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
+        )
+        
         customer_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_name_entry.set_tip(""))
         ).subscribe(lambda ipt: entity.set_customer_name(ipt))
-        customer_balance_entry = LabelEntryPair(self, "Customer Balance:")
+        
         customer_balance_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_balance_entry.set_tip(""))
         ).subscribe(
             on_next = lambda ipt: entity.set_customer_balance(Decimal(ipt)),
             on_error = lambda error: print(f"{error}")
         )
-        submit_button = OptionButton(self, "Add Submit", Subject())
-        cancel_button = OptionButton(self, "Add Cancel", Subject())
+        
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
-            operators.filter(lambda entity: entity.is_ready_for_submit(customer_name_entry, customer_balance_entry)),
-            operators.flat_map(lambda entity: handler.add_customer(entity.get_customer_name(), entity.get_customer_balance())),
+            operators.filter(lambda entity: entity.is_ready_for_submit()),
+            operators.flat_map(lambda entity: handler.add_customer(entity)),
         ).subscribe(cancel_button.get_button_subject())
+        
         cancel_button.get_button_subject().pipe(
             operators.do_action(lambda _: frame_holder.revert_frame(destory = True))
         ).subscribe(callback)
@@ -292,66 +272,41 @@ class ReactiveAddCustomerButton(AbstractMenuButton):
 
 class EditCustomerFrame(BaseFrame):
 
-    class CustomerEditEntity:
-
-        __customer_id: int
-        __customer_name:str
-        __customer_balance: Decimal
-
-        def __init__(self, id: int, name: str, balance: Decimal) -> None:
-            self.__customer_id = id
-            self.__customer_name = name
-            self.__customer_balance = balance
-    
-        def set_customer_name(self, customer_name: str) -> None:
-            self.__customer_name = customer_name
-
-        def set_customer_balance(self, customer_balance: Decimal) -> None:
-            self.__customer_balance = customer_balance
-
-        def get_customer_id(self) -> int:
-            return self.__customer_id
-
-        def get_customer_name(self) -> str:
-            return self.__customer_name
-    
-        def get_customer_balance(self) -> Decimal:
-            return self.__customer_balance
-
-        def is_ready_for_submit(self, customer_name_entry: LabelEntryPair, customer_balance_entry: LabelEntryPair) -> bool:
-            if self.get_customer_name() is None or len(self.get_customer_name()) == 0:
-                customer_name_entry.set_tip("Invalid Customer Name input")
-                return False
-            if self.get_customer_balance() is None:
-                customer_balance_entry.set_tip("Invalid Customer Balance input")
-                return False
-            return True
-
     def __init__(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
         self.draw_compnent(frame_holder, data_tuple, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject) -> None:
-        entity = EditCustomerFrame.CustomerEditEntity(int(data_tuple[0]), data_tuple[1], Decimal(data_tuple[2]))
+        
         LabelEntryPair(self, "Customer ID:", default_value = entity.get_customer_id(), editable = False)
         customer_name_entry = LabelEntryPair(self, "Customer Name:", default_value = entity.get_customer_name())
+        customer_balance_entry = LabelEntryPair(self, "Customer Balance:", default_value = entity.get_customer_balance())
+        submit_button = OptionButton(self, "Edit Submit", Subject())
+        cancel_button = OptionButton(self, "Edit Cancel", Subject())
+
+        entity = CustomerEditEntity(
+            FieldWrapper(int(data_tuple[0]), None), 
+            FieldWrapper(data_tuple[1], lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")), 
+            FieldWrapper(Decimal(data_tuple[2]), lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
+        )
+        
         customer_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_name_entry.set_tip(""))
         ).subscribe(lambda ipt: entity.set_customer_name(ipt))
-        customer_balance_entry = LabelEntryPair(self, "Customer Balance:", default_value = entity.get_customer_balance())
+        
         customer_balance_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_balance_entry.set_tip(""))
         ).subscribe(
             on_next = lambda ipt: entity.set_customer_balance(MethodInvoker.execute(lambda: Decimal(ipt))),
             on_error = lambda error: print(f"{error}")
         )
-        submit_button = OptionButton(self, "Edit Submit", Subject())
-        cancel_button = OptionButton(self, "Edit Cancel", Subject())
+        
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit(customer_name_entry, customer_balance_entry)),
             operators.flat_map(lambda entity: handler.edit_customer(entity.get_customer_id(), entity.get_customer_name(), entity.get_customer_balance())),
         ).subscribe(cancel_button.get_button_subject())
+        
         cancel_button.get_button_subject().pipe(
             operators.do_action(lambda _: frame_holder.revert_frame(destory = True))
         ).subscribe(callback)
@@ -383,60 +338,39 @@ class ReactiveEditCustomerButton(AbstractMenuButton):
 
 class AddProductFrame(BaseFrame):
 
-    class ProductAddEntity:
-
-        __product_name:str
-        __product_price: Decimal
-
-        def __init__(self) -> None:
-            self.__product_name = None
-            self.__product_price = None
-    
-        def set_product_name(self, product_name: str) -> None:
-            self.__product_name = product_name
-
-        def set_product_price(self, product_price: Decimal) -> None:
-            self.__product_price = product_price
-
-        def get_product_name(self) -> str:
-            return self.__product_name
-    
-        def get_product_price(self) -> Decimal:
-            return self.__product_price
-
-        def is_ready_for_submit(self, product_name_entry: LabelEntryPair, product_price_entry: LabelEntryPair) -> bool:
-            if self.get_product_name() is None or len(self.get_product_name()) == 0:
-                product_name_entry.set_tip("Invalid Product Name input")
-                return False
-            if self.get_product_price() is None:
-                product_price_entry.set_tip("Invalid Product Price input")
-                return False
-            return True
-
     def __init__(self, frame_holder: FrameHolder, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
         self.draw_compnent(frame_holder, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, callback: Subject) -> None:
-        entity = AddProductFrame.ProductAddEntity()
+        
         product_name_entry = LabelEntryPair(self, "Product Name:")
+        product_price_entry = LabelEntryPair(self, "Product Balance:")
+        submit_button = OptionButton(self, "Add Submit", Subject())
+        cancel_button = OptionButton(self, "Add Cancel", Subject())
+
+        entity = ProductAddEntity(
+            FieldWrapper(None, lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
+            FieldWrapper(None, lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
+        )
+
         product_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_name_entry.set_tip(""))
         ).subscribe(lambda ipt: entity.set_product_name(ipt))
-        product_price_entry = LabelEntryPair(self, "Product Balance:")
+        
         product_price_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_price_entry.set_tip(""))
         ).subscribe(
             on_next = lambda ipt: entity.set_product_price(Decimal(ipt)),
             on_error = lambda error: print(f"{error}")
         )
-        submit_button = OptionButton(self, "Add Submit", Subject())
-        cancel_button = OptionButton(self, "Add Cancel", Subject())
+        
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_product(entity.get_product_name(), entity.get_product_price())),
+            operators.flat_map(lambda entity: handler.add_product(entity)),
         ).subscribe(cancel_button.get_button_subject())
+        
         cancel_button.get_button_subject().pipe(
             operators.do_action(lambda _: frame_holder.revert_frame(destory = True))
         ).subscribe(callback)
@@ -462,67 +396,42 @@ class ReactiveAddProductButton(AbstractMenuButton):
         pass
 
 class EditProductFrame(BaseFrame):
-
-    class ProductEditEntity:
-
-        __product_id: int
-        __product_name:str
-        __product_price: Decimal
-
-        def __init__(self, id: int, name: str, price: Decimal) -> None:
-            self.__product_id = id
-            self.__product_name = name
-            self.__product_price = price
-    
-        def set_product_name(self, product_name: str) -> None:
-            self.__product_name = product_name
-
-        def set_product_price(self, product_price: Decimal) -> None:
-            self.__product_price = product_price
-
-        def get_product_id(self) -> int:
-            return self.__product_id
-
-        def get_product_name(self) -> str:
-            return self.__product_name
-    
-        def get_product_price(self) -> Decimal:
-            return self.__product_price
-
-        def is_ready_for_submit(self, product_name_entry: LabelEntryPair, product_price_entry: LabelEntryPair) -> bool:
-            if self.get_product_name() is None or len(self.get_product_name()) == 0:
-                product_name_entry.set_tip("Invalid Product Name input")
-                return False
-            if self.get_product_price() is None:
-                product_price_entry.set_tip("Invalid Product Price input")
-                return False
-            return True
         
     def __init__(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
         self.draw_compnent(frame_holder, data_tuple, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject) -> None:
-        entity = EditProductFrame.ProductEditEntity(int(data_tuple[0]), data_tuple[1], Decimal(data_tuple[2]))
+
         LabelEntryPair(self, "Product ID:", default_value = entity.get_product_id(), editable = False)
         product_name_entry = LabelEntryPair(self, "Product Name:", default_value = entity.get_product_name())
+        product_price_entry = LabelEntryPair(self, "Product Balance:", default_value = entity.get_product_price())
+        submit_button = OptionButton(self, "Edit Submit", Subject())
+        cancel_button = OptionButton(self, "Edit Cancel", Subject())
+
+        entity = EditProductFrame.ProductEditEntity(
+            FieldWrapper(int(data_tuple[0]), None),
+            FieldWrapper(data_tuple[1], lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
+            FieldWrapper(Decimal(data_tuple[2]), lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
+        )
+        
         product_name_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_name_entry.set_tip(""))
         ).subscribe(lambda ipt: entity.set_product_name(ipt))
-        product_price_entry = LabelEntryPair(self, "Product Balance:", default_value = entity.get_product_price())
+        
         product_price_entry.get_input_subject().pipe(
             operators.do_action(lambda _: product_price_entry.set_tip(""))
         ).subscribe(
             on_next = lambda ipt: entity.set_product_price(MethodInvoker.execute(lambda: Decimal(ipt))),
             on_error = lambda error: print(f"{error}")
         )
-        submit_button = OptionButton(self, "Edit Submit", Subject())
-        cancel_button = OptionButton(self, "Edit Cancel", Subject())
+        
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.edit_product(entity.get_product_id(), entity.get_product_name(), entity.get_product_price())),
         ).subscribe(cancel_button.get_button_subject())
+        
         cancel_button.get_button_subject().pipe(
             operators.do_action(lambda _: frame_holder.revert_frame(destory = True))
         ).subscribe(callback)
