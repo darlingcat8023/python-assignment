@@ -69,6 +69,12 @@ class CustomerEditEntity(CustomerAddEntity):
         return self.__customer_id.get_value()
     
 
+class CustomerViewEntity(CustomerEditEntity):
+
+    def __init__(self, id: int, name: str, balance: Decimal) -> None:
+        super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](balance, None))
+
+
 class ProductAddEntity:
 
     __product_name: FieldWrapper[str]
@@ -111,6 +117,11 @@ class ProductEditEntity(ProductAddEntity):
         super().__init__(name_wrapper, price_wrapper)
         self.__product_id = id_wrapper
 
-    def get_customer_id(self) -> int:
+    def get_product_id(self) -> int:
         return self.__product_id.get_value()
 
+
+class ProductViewEntity(ProductEditEntity):
+
+    def __init__(self, id: int, name: str, price: Decimal) -> None:
+        super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](price, None))

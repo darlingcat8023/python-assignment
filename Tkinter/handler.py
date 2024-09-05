@@ -14,11 +14,12 @@ ProductEntity.init_data_set()
 def list_all_customers() -> Observable[List[Customer]]:
     return reactivex.of(CustomerEntity.get_customer_list())
 
-def page_all_customers(page_num: int, page_size: int) -> Observable[Page[Customer]]:
+def page_all_customers(page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
     list = CustomerEntity.get_customer_list()
     return reactivex.from_iterable(list).pipe(
         operators.skip(page_size * page_num),
         operators.take(page_size),
+        operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
         operators.to_iterable(),
         operators.map(lambda set: Page(len(list), set))
     )
@@ -44,6 +45,6 @@ def add_product(entity: ProductAddEntity) -> Observable[str]:
     ProductEntity.append_product(entity.get_product_name(), entity.get_product_price())
     return reactivex.create(lambda obj, _: obj.on_next("success"))
 
-def edit_product(id: int, name: str, price: Decimal) -> Observable[str]:
-    ProductEntity.edit_product(id, name, price)
+def edit_product(entity: ProductViewEntity) -> Observable[str]:
+    ProductEntity.edit_product(entity.get_product_id(), entity.get_product_name(), entity.get_product_price())
     return reactivex.create(lambda obj, _: obj.on_next("success"))

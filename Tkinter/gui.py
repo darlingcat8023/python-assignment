@@ -64,16 +64,19 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
-        table = PageableTreeTable[abstract_interface.Customer](frame,
+        table = PageableTreeTable[CustomerViewEntity](frame,
             lambda page, page_size: handler.page_all_customers(page, page_size),
-            lambda table, data: table.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance()))
+            lambda table, data: table.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance())),
+            lambda tuple: CustomerViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
         )
         table.set_column_title(['Customer Id', 'Customer Name', 'Customer Balance'])
         ReactiveAddCustomerButton(frame, "Add Customer", self.get_frame_holder(), Subject(), table.get_load_subject())
-        self.get_button_subject().subscribe(table.get_load_subject())
         edit_button = ReactiveEditCustomerButton(frame, "Edit Customer", self.get_frame_holder(), Subject(), table.get_load_subject())
+
+        self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
-        table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
+        
+        table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
         table.get_selected_subject().pipe(
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
@@ -88,15 +91,18 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
-        table = PageableTreeTable[abstract_interface.Product](frame,
+        table = PageableTreeTable[ProductViewEntity](frame,
             lambda page, page_size: handler.list_all_products(page, page_size),
-            lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price()))
+            lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price())),
+            lambda tuple: ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
         )
         table.set_column_title(['Product Id', 'Product Name', 'Product Price'])
         ReactiveAddProductButton(frame, "Add Product", self.get_frame_holder(), Subject(), table.get_load_subject())
-        self.get_button_subject().subscribe(table.get_load_subject())
         edit_button = ReactiveEditProductButton(frame, "Edit Product", self.get_frame_holder(), Subject(), table.get_load_subject())
+        
+        self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
+        
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
         table.get_selected_subject().pipe(
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
@@ -224,8 +230,8 @@ class AddCustomerFrame(BaseFrame):
         cancel_button = OptionButton(self, "Add Cancel", Subject())
 
         entity = CustomerAddEntity(
-            FieldWrapper(None, lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")),
-            FieldWrapper(None, lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
+            FieldWrapper[str](None, lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")),
+            FieldWrapper[Decimal](None, lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
         )
         
         customer_name_entry.get_input_subject().pipe(
@@ -272,22 +278,22 @@ class ReactiveAddCustomerButton(AbstractMenuButton):
 
 class EditCustomerFrame(BaseFrame):
 
-    def __init__(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject, width: int = -1) -> None:
+    def __init__(self, frame_holder: FrameHolder, data: CustomerViewEntity, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
-        self.draw_compnent(frame_holder, data_tuple, callback)
+        self.draw_compnent(frame_holder, data, callback)
 
-    def draw_compnent(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject) -> None:
+    def draw_compnent(self, frame_holder: FrameHolder, data: CustomerViewEntity, callback: Subject) -> None:
         
-        LabelEntryPair(self, "Customer ID:", default_value = entity.get_customer_id(), editable = False)
-        customer_name_entry = LabelEntryPair(self, "Customer Name:", default_value = entity.get_customer_name())
-        customer_balance_entry = LabelEntryPair(self, "Customer Balance:", default_value = entity.get_customer_balance())
+        LabelEntryPair(self, "Customer ID:", default_value = data.get_customer_id(), editable = False)
+        customer_name_entry = LabelEntryPair(self, "Customer Name:", default_value = data.get_customer_name())
+        customer_balance_entry = LabelEntryPair(self, "Customer Balance:", default_value = data.get_customer_balance())
         submit_button = OptionButton(self, "Edit Submit", Subject())
         cancel_button = OptionButton(self, "Edit Cancel", Subject())
 
         entity = CustomerEditEntity(
-            FieldWrapper(int(data_tuple[0]), None), 
-            FieldWrapper(data_tuple[1], lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")), 
-            FieldWrapper(Decimal(data_tuple[2]), lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
+            FieldWrapper[int](data.get_customer_id(), None), 
+            FieldWrapper[str](data.get_customer_name(), lambda ipt: customer_name_entry.set_tip("Invalid Customer Name input")), 
+            FieldWrapper[Decimal](data.get_customer_balance(), lambda ipt: customer_balance_entry.set_tip("Invalid Customer Balance input"))
         )
         
         customer_name_entry.get_input_subject().pipe(
@@ -303,8 +309,8 @@ class EditCustomerFrame(BaseFrame):
         
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
-            operators.filter(lambda entity: entity.is_ready_for_submit(customer_name_entry, customer_balance_entry)),
-            operators.flat_map(lambda entity: handler.edit_customer(entity.get_customer_id(), entity.get_customer_name(), entity.get_customer_balance())),
+            operators.filter(lambda entity: entity.is_ready_for_submit()),
+            operators.flat_map(lambda entity: handler.edit_customer(entity)),
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -315,7 +321,7 @@ class EditCustomerFrame(BaseFrame):
 class ReactiveEditCustomerButton(AbstractMenuButton):
 
     __callback_subject: Subject
-    __customer_tuple: Tuple[str]
+    __customer_view: CustomerViewEntity
 
     def __init__(self, parent: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(parent, name, frame_holder, subject)
@@ -325,12 +331,12 @@ class ReactiveEditCustomerButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = EditCustomerFrame(self.get_frame_holder(), self.__customer_tuple, self.__callback_subject)
+        new_frame = EditCustomerFrame(self.get_frame_holder(), self.__customer_view, self.__callback_subject)
         new_frame.set_frame_style(RIGHT, BOTH, True)
         return new_frame
     
-    def set_data_to_edit(self, data_tuple: Tuple[str]) -> None:
-        self.__customer_tuple = data_tuple
+    def set_data_to_edit(self, data: CustomerViewEntity) -> None:
+        self.__customer_view = data
 
     def render_compnent(self, frame: BaseFrame) -> None:
         pass
@@ -350,8 +356,8 @@ class AddProductFrame(BaseFrame):
         cancel_button = OptionButton(self, "Add Cancel", Subject())
 
         entity = ProductAddEntity(
-            FieldWrapper(None, lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
-            FieldWrapper(None, lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
+            FieldWrapper[str](None, lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
+            FieldWrapper[Decimal](None, lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
         )
 
         product_name_entry.get_input_subject().pipe(
@@ -397,22 +403,22 @@ class ReactiveAddProductButton(AbstractMenuButton):
 
 class EditProductFrame(BaseFrame):
         
-    def __init__(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject, width: int = -1) -> None:
+    def __init__(self, frame_holder: FrameHolder, data: ProductViewEntity, callback: Subject, width: int = -1) -> None:
         super().__init__(frame_holder.get_base_frame(), width)
-        self.draw_compnent(frame_holder, data_tuple, callback)
+        self.draw_compnent(frame_holder, data, callback)
 
-    def draw_compnent(self, frame_holder: FrameHolder, data_tuple: Tuple, callback: Subject) -> None:
+    def draw_compnent(self, frame_holder: FrameHolder, data: ProductViewEntity, callback: Subject) -> None:
 
-        LabelEntryPair(self, "Product ID:", default_value = entity.get_product_id(), editable = False)
-        product_name_entry = LabelEntryPair(self, "Product Name:", default_value = entity.get_product_name())
-        product_price_entry = LabelEntryPair(self, "Product Balance:", default_value = entity.get_product_price())
+        LabelEntryPair(self, "Product ID:", default_value = data.get_product_id(), editable = False)
+        product_name_entry = LabelEntryPair(self, "Product Name:", default_value = data.get_product_name())
+        product_price_entry = LabelEntryPair(self, "Product Balance:", default_value = data.get_product_price())
         submit_button = OptionButton(self, "Edit Submit", Subject())
         cancel_button = OptionButton(self, "Edit Cancel", Subject())
 
-        entity = EditProductFrame.ProductEditEntity(
-            FieldWrapper(int(data_tuple[0]), None),
-            FieldWrapper(data_tuple[1], lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
-            FieldWrapper(Decimal(data_tuple[2]), lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
+        entity = ProductEditEntity(
+            FieldWrapper[int](data.get_product_id(), None),
+            FieldWrapper[str](data.get_product_name(), lambda ipt: product_name_entry.set_tip("Invalid Product Name input")),
+            FieldWrapper[Decimal](data.get_product_price(), lambda ipt: product_price_entry.set_tip("Invalid Product Price input"))
         )
         
         product_name_entry.get_input_subject().pipe(
@@ -429,7 +435,7 @@ class EditProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_product(entity.get_product_id(), entity.get_product_name(), entity.get_product_price())),
+            operators.flat_map(lambda entity: handler.edit_product(entity)),
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -440,7 +446,7 @@ class EditProductFrame(BaseFrame):
 class ReactiveEditProductButton(AbstractMenuButton):
 
     __callback_subject: Subject
-    __product_tuple: Tuple[str]
+    __product_view: ProductViewEntity
 
     def __init__(self, parent: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(parent, name, frame_holder, subject)
@@ -450,12 +456,12 @@ class ReactiveEditProductButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = EditProductFrame(self.get_frame_holder(), self.__product_tuple, self.__callback_subject)
+        new_frame = EditProductFrame(self.get_frame_holder(), self.__product_view, self.__callback_subject)
         new_frame.set_frame_style(RIGHT, BOTH, True)
         return new_frame
     
-    def set_data_to_edit(self, data_tuple: Tuple[str]) -> None:
-        self.__product_tuple = data_tuple
+    def set_data_to_edit(self, data: ProductViewEntity) -> None:
+        self.__product_view = data
 
     def render_compnent(self, frame: BaseFrame) -> None:
         pass    

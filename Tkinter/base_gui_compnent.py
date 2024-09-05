@@ -176,10 +176,18 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
 
     __load_subject: Subject
     __selected_subject: Subject
+    __instance_supplier: Callable[[Tuple[str]], T]
 
-    def __init__(self, parent_frame: BaseFrame, data_function: Callable[[int, int], Observable[page.Page[T]]], column_func: Callable[[TT, T], None], page_size: int = 35) -> None:
+    def __init__(self, parent_frame: BaseFrame, 
+                 data_function: Callable[[int, int], Observable[page.Page[T]]], 
+                 column_func: Callable[[TT, T], None], 
+                 instance_supplier: Callable[[Tuple[str]], T], 
+                 page_size: int = 35) -> None:
+        
         super().__init__(parent_frame, show = "headings")
+        self.__instance_supplier = instance_supplier
         self.__page_size = page_size
+        
         pagination_frame = BaseFrame(parent_frame)
 
         load_subject = Subject()
@@ -230,7 +238,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
     def __on_selection(self, event: Event) -> None:
         selected_items = self.selection()
         if selected_items:
-            self.__selected_subject.on_next(self.item(selected_items[0], 'values'))
+            self.__selected_subject.on_next(self.__instance_supplier(self.item(selected_items[0], 'values')))
 
     def set_column_title(self, columns: List[str]) -> TT:
         self["columns"] = columns
