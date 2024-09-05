@@ -3,7 +3,7 @@ from tkinter import Event, Frame, ttk
 from typing import TypeVar, List, Callable, Generic, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
-import abc, handler, page, customer, math, reactivex, abstract_interface
+import abc, handler, page, customer, math, reactivex
 from decimal import Decimal
 from base_gui_compnent import *
 from view_model import *

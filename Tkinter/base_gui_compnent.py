@@ -3,7 +3,7 @@ from tkinter import Event, Frame, ttk, font
 from typing import TypeVar, List, Callable, Generic, Tuple, Dict
 from reactivex import operators, Observable
 from reactivex.subject import *
-import abc, handler, page, customer, math, reactivex, abstract_interface
+import abc, handler, page, customer, math, reactivex
 from decimal import Decimal
 
 ## TypeVar used in some comenents for the type restriction

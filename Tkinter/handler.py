@@ -5,7 +5,7 @@ from typing import List
 from decimal import Decimal
 from reactivex import operators, Observable
 import reactivex
-from abstract_interface import *
+from abstract_entity import *
 from view_model import *
 
 CustomerEntity.init_data_set()

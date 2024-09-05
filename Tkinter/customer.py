@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import List
-from abstract_interface import Customer
+from abstract_entity import Customer
 
 class CustomerEntity(Customer):
 
@@ -10,7 +10,7 @@ class CustomerEntity(Customer):
     def init_data_set() -> None:
         CustomerEntity.__customer_list = []
         for i in range(1, 200):
-            CustomerEntity.get_customer_list().append(CustomerEntity(i, "customer" + str(i)))
+            CustomerEntity.get_customer_list().append(CustomerEntity(i, "customer-" + str(i), Decimal(i * 100)))
 
     @staticmethod
     def get_customer_list() -> List[Customer]:

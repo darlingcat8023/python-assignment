@@ -1,6 +1,6 @@
 from decimal import Decimal
 from typing import List
-from abstract_interface import Product
+from abstract_entity import Product
 
 class ProductEntity(Product):
     
@@ -9,6 +9,8 @@ class ProductEntity(Product):
     @staticmethod
     def init_data_set() -> None:
         ProductEntity.__product_list = []
+        for i in range(1, 200):
+            ProductEntity.get_product_list().append(ProductEntity(i, "product-" + str(i), Decimal(i * 10)))
 
     @staticmethod
     def get_product_list() -> List[Product]:
