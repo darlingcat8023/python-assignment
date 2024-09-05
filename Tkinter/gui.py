@@ -64,8 +64,9 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
+        customer_name_entry = LabelEntryPair(frame, "Customer Name:")
         table = PageableTreeTable[CustomerViewEntity](frame,
-            lambda page, page_size: handler.page_customers(page, page_size),
+            lambda pattern, page, page_size: handler.page_customers(pattern, page, page_size),
             lambda table, data: table.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance())),
             lambda tuple: CustomerViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
         )
@@ -75,8 +76,11 @@ class ReactiveListCustomerButton(AbstractMenuButton):
 
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
+
+        customer_name_entry.get_input_subject().subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
+        
         table.get_selected_subject().pipe(
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
@@ -91,8 +95,9 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
+        product_name_entry = LabelEntryPair(frame, "Product Name:")
         table = PageableTreeTable[ProductViewEntity](frame,
-            lambda page, page_size: handler.page_products(page, page_size),
+            lambda pattern, page, page_size: handler.page_products(pattern, page, page_size),
             lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price())),
             lambda tuple: ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
         )
@@ -102,6 +107,8 @@ class ReactiveListProductButton(AbstractMenuButton):
         
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
+
+        product_name_entry.get_input_subject().subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
         table.get_selected_subject().pipe(

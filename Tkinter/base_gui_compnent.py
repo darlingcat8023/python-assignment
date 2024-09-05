@@ -91,7 +91,7 @@ class AbstractButton(abc.ABC, Button):
         return self.__click_subject
 
     def on_click_event(self, event: Event) -> None:
-        self.__click_subject.on_next(event)
+        self.__click_subject.on_next(None)
 
 
 class AbstractMenuButton(AbstractButton):
@@ -179,7 +179,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
     __instance_supplier: Callable[[Tuple[str]], T]
 
     def __init__(self, parent_frame: BaseFrame, 
-                 data_function: Callable[[int, int], Observable[page.Page[T]]], 
+                 data_function: Callable[[str, int, int], Observable[page.Page[T]]], 
                  column_func: Callable[[TT, T], None], 
                  instance_supplier: Callable[[Tuple[str]], T], 
                  page_size: int = 35) -> None:
@@ -204,7 +204,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
 
         load_subject.pipe(
             operators.do_action(lambda _: self.clear()),
-            operators.flat_map(lambda _: data_function(self.get_current_page() - 1, self.get_page_size())),
+            operators.flat_map(lambda pattern: data_function(pattern, self.get_current_page() - 1, self.get_page_size())),
             operators.do_action(lambda page_data: self.__set_max_page_num(math.ceil(page_data.get_total() / self.get_page_size()))),
             operators.do_action(lambda _: num_label.configure(text = "Page: {}/{}".format(self.get_current_page(), self.get_max_page_num()))),
             operators.flat_map(lambda page_data: reactivex.from_iterable(page_data.get_data())),
@@ -264,7 +264,7 @@ class LabelEntryPair(BaseFrame):
     
     def __init__(self, parent: Frame, label_name: str, /, *, default_value: str = "", editable: bool= True, width: int = -1) -> None:
         BaseFrame.__init__(self, parent, width = width)
-        self.set_frame_style(TOP, BOTH, True)
+        self.set_frame_style(TOP, X, True)
         input_subject = Subject()
         self.__input_subject = input_subject
         self.draw_compnent(label_name, default_value, editable, input_subject)

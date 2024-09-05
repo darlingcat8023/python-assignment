@@ -17,14 +17,18 @@ def all_customers() -> Observable[List[CustomerViewEntity]]:
         operators.to_iterable()
     )
 
-def page_customers(page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
-    list = CustomerEntity.get_customer_list()
-    return reactivex.from_iterable(list).pipe(
-        operators.skip(page_size * page_num),
-        operators.take(page_size),
-        operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
-        operators.to_iterable(),
-        operators.map(lambda set: Page(len(list), set))
+def page_customers(pattern: str, page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
+    return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+        operators.count(),
+        operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+            operators.skip(page_size * page_num),
+            operators.take(page_size),
+            operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
+            operators.to_iterable(),
+            operators.map(lambda set: Page(count, set))
+        ))
     )
 
 def add_customer(entity: CustomerAddEntity) -> Observable[str]:
@@ -41,14 +45,18 @@ def all_products() -> Observable[List[ProductViewEntity]]:
         operators.to_iterable()
     )
 
-def page_products(page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
-    list = ProductEntity.get_product_list()
-    return reactivex.from_iterable(list).pipe(
-        operators.skip(page_size * page_num),
-        operators.take(page_size),
-        operators.map(lambda item: ProductViewEntity(item.get_product_id(), item.get_product_name(), item.get_product_price())),
-        operators.to_iterable(),
-        operators.map(lambda set: Page(len(list), set))
+def page_products(pattern: str, page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
+    return reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
+        operators.filter(lambda item: item.get_product_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+        operators.count(),
+        operators.flat_map(lambda count: reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
+            operators.filter(lambda item: item.get_product_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+            operators.skip(page_size * page_num),
+            operators.take(page_size),
+            operators.map(lambda item: ProductViewEntity(item.get_product_id(), item.get_product_name(), item.get_product_price())),
+            operators.to_iterable(),
+            operators.map(lambda set: Page(count, set))
+        ))
     )
 
 def add_product(entity: ProductAddEntity) -> Observable[str]:
