@@ -64,7 +64,8 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
-        customer_name_entry = LabelEntryPair(frame, "Customer Name:")
+        
+        customer_search= SearchBar(frame, "Customer Name:")
         table = PageableTreeTable[CustomerViewEntity](frame,
             lambda pattern, page, page_size: handler.page_customers(pattern, page, page_size),
             lambda table, data: table.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance())),
@@ -77,7 +78,7 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
-        customer_name_entry.get_input_subject().subscribe(table.get_load_subject())
+        customer_search.get_input_subject().subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
         
@@ -95,7 +96,7 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
-        product_name_entry = LabelEntryPair(frame, "Product Name:")
+        product_search = SearchBar(frame, "Product Name:")
         table = PageableTreeTable[ProductViewEntity](frame,
             lambda pattern, page, page_size: handler.page_products(pattern, page, page_size),
             lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price())),
@@ -108,7 +109,7 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
-        product_name_entry.get_input_subject().subscribe(table.get_load_subject())
+        product_search.get_input_subject().subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
         table.get_selected_subject().pipe(
@@ -259,6 +260,7 @@ class AddCustomerFrame(BaseFrame):
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.add_customer(entity)),
+            operators.map(lambda _: None)
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -318,6 +320,7 @@ class EditCustomerFrame(BaseFrame):
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.edit_customer(entity)),
+            operators.map(lambda _: None)
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -382,6 +385,7 @@ class AddProductFrame(BaseFrame):
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.add_product(entity)),
+            operators.map(lambda _: None)
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -440,6 +444,7 @@ class EditProductFrame(BaseFrame):
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
             operators.flat_map(lambda entity: handler.edit_product(entity)),
+            operators.map(lambda _: None)
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(

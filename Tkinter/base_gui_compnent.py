@@ -264,15 +264,17 @@ class LabelEntryPair(BaseFrame):
     
     def __init__(self, parent: Frame, label_name: str, /, *, default_value: str = "", editable: bool= True, width: int = -1) -> None:
         BaseFrame.__init__(self, parent, width = width)
-        self.set_frame_style(TOP, X, True)
         input_subject = Subject()
         self.__input_subject = input_subject
         self.draw_compnent(label_name, default_value, editable, input_subject)
         self.display_frame()
 
+    def display_frame(self) -> None:
+        self.pack(side = TOP, fill = X, expand = True)
+
     def draw_compnent(self, label_name: str, default_value: str, editable: bool, input_subject: Subject) -> None:
         label = Label(self, text = label_name, width = 20, anchor = E)
-        label.pack(side = LEFT, fill = X, expand = True, padx = 20)
+        self.set_label_style(label)
         entry_var = StringVar()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
         entry = Entry(self, width = 30, relief = FLAT, borderwidth = 3, textvariable = entry_var)
@@ -283,6 +285,9 @@ class LabelEntryPair(BaseFrame):
         tip_label = Label(self, width = 150)
         tip_label.pack(side = LEFT, fill = X, expand = True)
         self.__tip_label = tip_label
+    
+    def set_label_style(self, label: Label) -> None:
+        label.pack(side = LEFT, fill = X, expand = True, padx = 20)
 
     def get_input_subject(self) -> Subject:
         return self.__input_subject
@@ -370,3 +375,32 @@ class BaseSpinBox(Spinbox):
 
     def get_selected_subject(self) -> Subject:
         return self.__selected_subject
+
+
+class SearchBar(BaseFrame):
+
+    __input_subject: Subject
+    
+    def __init__(self, parent: Frame, label_name: str, /, *, width: int = -1) -> None:
+        BaseFrame.__init__(self, parent, width = width)
+        input_subject = Subject()
+        self.__input_subject = input_subject
+        self.draw_compnent(label_name, input_subject)
+        self.display_frame()
+
+    def display_frame(self) -> None:
+        self.pack(side = TOP)
+
+    def draw_compnent(self, label_name: str, input_subject: Subject) -> None:
+        label = Label(self, text = label_name, width = 20, anchor = E)
+        self.set_label_style(label)
+        entry_var = StringVar()
+        entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
+        entry = Entry(self, width = 30, relief = FLAT, borderwidth = 3, textvariable = entry_var)
+        entry.pack(side = LEFT, fill = X, expand = True, padx = 20)
+
+    def set_label_style(self, label: Label) -> None:
+        label.pack(side = LEFT, fill = X, expand = True, padx = 20)
+
+    def get_input_subject(self) -> Subject:
+        return self.__input_subject
