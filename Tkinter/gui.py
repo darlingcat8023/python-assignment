@@ -65,20 +65,30 @@ class ReactiveListCustomerButton(AbstractMenuButton):
 
     def render_compnent(self, frame: BaseFrame) -> None:
         
+        entity = CustomerListFilterEntity()
         customer_search= SearchBar(frame, "Customer Name:")
-        table = PageableTreeTable[CustomerViewEntity](frame,
-            lambda pattern, page, page_size: handler.page_customers(pattern, page, page_size),
-            lambda table, data: table.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance())),
-            lambda tuple: CustomerViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
-        )
-        table.set_column_title(['Customer Id', 'Customer Name', 'Customer Balance'])
+
+        class Table(PageableTreeTable[CustomerViewEntity]):
+
+            def data_provider(self, page: int, page_size: int) -> Observable[handler.Page]:
+                return handler.page_customers(entity, page, page_size)
+            
+            def column_provider(self, data: CustomerViewEntity) -> None:
+                self.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance()))
+
+            def instance_provider(self, tuple: Tuple[str]) -> CustomerViewEntity:
+                return CustomerViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
+        
+        table = Table(frame, ['Customer Id', 'Customer Name', 'Customer Balance'])
         ReactiveAddCustomerButton(frame, "Add Customer", self.get_frame_holder(), Subject(), table.get_load_subject())
         edit_button = ReactiveEditCustomerButton(frame, "Edit Customer", self.get_frame_holder(), Subject(), table.get_load_subject())
 
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
-        customer_search.get_input_subject().subscribe(table.get_load_subject())
+        customer_search.get_input_subject().pipe(
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+        ).subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
         
@@ -96,20 +106,31 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def render_compnent(self, frame: BaseFrame) -> None:
+
+        entity = ProductListFilterEntity()
         product_search = SearchBar(frame, "Product Name:")
-        table = PageableTreeTable[ProductViewEntity](frame,
-            lambda pattern, page, page_size: handler.page_products(pattern, page, page_size),
-            lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price())),
-            lambda tuple: ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
-        )
-        table.set_column_title(['Product Id', 'Product Name', 'Product Price'])
+        
+        class Table(PageableTreeTable[ProductViewEntity]):
+
+            def data_provider(self, page: int, page_size: int) -> Observable[handler.Page]:
+                return handler.page_products(entity, page, page_size)
+            
+            def column_provider(self, data: ProductViewEntity) -> None:
+                return self.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price()))
+            
+            def instance_provider(self, tuple: Tuple[str]) -> ProductViewEntity:
+                return ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
+        
+        table = Table(frame, ['Product Id', 'Product Name', 'Product Price'])
         ReactiveAddProductButton(frame, "Add Product", self.get_frame_holder(), Subject(), table.get_load_subject())
         edit_button = ReactiveEditProductButton(frame, "Edit Product", self.get_frame_holder(), Subject(), table.get_load_subject())
         
         self.get_button_subject().subscribe(table.get_load_subject())
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
-        product_search.get_input_subject().subscribe(table.get_load_subject())
+        product_search.get_input_subject().pipe(
+            operators.do_action(lambda ipt: entity.set_product_name(ipt))
+        ).subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
         table.get_selected_subject().pipe(
@@ -259,8 +280,7 @@ class AddCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_customer(entity)),
-            operators.map(lambda _: None)
+            operators.flat_map(lambda entity: handler.add_customer(entity))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -319,8 +339,7 @@ class EditCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_customer(entity)),
-            operators.map(lambda _: None)
+            operators.flat_map(lambda entity: handler.edit_customer(entity))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -384,8 +403,7 @@ class AddProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_product(entity)),
-            operators.map(lambda _: None)
+            operators.flat_map(lambda entity: handler.add_product(entity))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -443,8 +461,7 @@ class EditProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_product(entity)),
-            operators.map(lambda _: None)
+            operators.flat_map(lambda entity: handler.edit_product(entity))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(

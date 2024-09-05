@@ -24,8 +24,29 @@ class BaseSpinBox(Spinbox):
         return self.__selected_subject
 
 
-root = Tk()
-root.title("Spinbox with IntVar Example")
-spin = BaseSpinBox(root)
-spin.get_selected_subject().subscribe(lambda i: print(i))
-root.mainloop()
+# root = Tk()
+# root.title("Spinbox with IntVar Example")
+# spin = BaseSpinBox(root)
+# spin.get_selected_subject().subscribe(lambda i: print(i))
+# root.mainloop()
+
+
+class TestA:
+
+    def __init__(self) -> None:
+        print(self.get_a_string())
+
+    def get_a_string(self) -> str:
+        return "111"
+    
+
+def test_method() -> None:
+    
+    class TestB(TestA):
+
+        def get_a_string(self) -> str:
+            return "222"
+        
+    ins = TestB()
+
+test_method()

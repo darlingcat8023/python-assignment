@@ -17,12 +17,12 @@ def all_customers() -> Observable[List[CustomerViewEntity]]:
         operators.to_iterable()
     )
 
-def page_customers(pattern: str, page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
+def page_customers(pattern: CustomerListFilterEntity, page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
         operators.count(),
         operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
             operators.skip(page_size * page_num),
             operators.take(page_size),
             operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
@@ -45,12 +45,12 @@ def all_products() -> Observable[List[ProductViewEntity]]:
         operators.to_iterable()
     )
 
-def page_products(pattern: str, page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
+def page_products(pattern: ProductListFilterEntity, page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
     return reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
-        operators.filter(lambda item: item.get_product_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+        operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
         operators.count(),
         operators.flat_map(lambda count: reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
-            operators.filter(lambda item: item.get_product_name().lower().startswith(pattern) if pattern is not None and len(pattern) > 0 else True),
+            operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
             operators.skip(page_size * page_num),
             operators.take(page_size),
             operators.map(lambda item: ProductViewEntity(item.get_product_id(), item.get_product_name(), item.get_product_price())),

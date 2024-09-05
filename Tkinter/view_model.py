@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import TypeVar, List, Callable, Generic, Tuple
 from abc import *
+from reactivex import operators, Observable
 
 T = TypeVar("T")
 
@@ -91,6 +92,21 @@ class CustomerViewEntity(CustomerEditEntity, SelectableEntity):
 
     def get_selection_key(self) -> str:
         return "{0} [ID:{1}]".format(self.get_customer_name(), self.get_customer_id())
+    
+
+class CustomerListFilterEntity:
+
+    __customer_name: str
+
+    def __init__(self) -> None:
+        self.__customer_name = None
+
+    def set_customer_name(self, name: str) -> None:
+        self.__customer_name = name
+
+    def get_customer_name(self) -> str:
+        return self.__customer_name
+    
 
 class ProductAddEntity:
 
@@ -151,6 +167,20 @@ class ProductViewEntity(ProductEditEntity, SelectableEntity):
 
     def get_selection_key(self) -> str:
         return "{0} [ID:{1}]".format(self.get_product_name(), self.get_product_id())
+    
+
+class ProductListFilterEntity:
+
+    __product_name: str
+
+    def __init__(self) -> None:
+        self.__product_name = None
+
+    def set_product_name(self, name: str) -> None:
+        self.__product_name = name
+
+    def get_product_name(self) -> str:
+        return self.__product_name
     
 
 class OrderCreateEntity:

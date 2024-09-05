@@ -137,7 +137,7 @@ class OptionButton(AbstractButton):
 
 TT = TypeVar("TT", bound = "PageableTreeTable")
 
-class PageableTreeTable(ttk.Treeview, Generic[T]):
+class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
     class PrevButton(AbstractButton):
 
@@ -176,16 +176,10 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
 
     __load_subject: Subject
     __selected_subject: Subject
-    __instance_supplier: Callable[[Tuple[str]], T]
 
-    def __init__(self, parent_frame: BaseFrame, 
-                 data_function: Callable[[str, int, int], Observable[page.Page[T]]], 
-                 column_func: Callable[[TT, T], None], 
-                 instance_supplier: Callable[[Tuple[str]], T], 
-                 page_size: int = 35) -> None:
+    def __init__(self, parent_frame: BaseFrame, columns: List[str],  page_size: int = 35) -> None:
         
         super().__init__(parent_frame, show = "headings")
-        self.__instance_supplier = instance_supplier
         self.__page_size = page_size
         
         pagination_frame = BaseFrame(parent_frame)
@@ -204,11 +198,11 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
 
         load_subject.pipe(
             operators.do_action(lambda _: self.clear()),
-            operators.flat_map(lambda pattern: data_function(pattern, self.get_current_page() - 1, self.get_page_size())),
+            operators.flat_map(lambda _: self.data_provider(self.get_current_page() - 1, self.get_page_size())),
             operators.do_action(lambda page_data: self.__set_max_page_num(math.ceil(page_data.get_total() / self.get_page_size()))),
             operators.do_action(lambda _: num_label.configure(text = "Page: {}/{}".format(self.get_current_page(), self.get_max_page_num()))),
             operators.flat_map(lambda page_data: reactivex.from_iterable(page_data.get_data())),
-            operators.do_action(lambda data: column_func(self, data))
+            operators.do_action(lambda data: self.column_provider(data))
         ).subscribe()
 
         load_subject.pipe(
@@ -222,7 +216,13 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
         pagination_frame.pack(side = TOP, fill = X)
         selected_subject = Subject()
         self.__selected_subject = selected_subject
+        self["columns"] = columns
+        for col in columns:
+            self.heading(col, text = col)
         self.bind("<<TreeviewSelect>>", self.__on_selection)
+        self.set_style()
+
+    def set_style(self) -> None:
         self.pack(side = TOP, fill = BOTH, padx = 10, pady = 10, expand = True)
     
     def back_page(self) -> None:
@@ -235,16 +235,22 @@ class PageableTreeTable(ttk.Treeview, Generic[T]):
         if curr < self.get_max_page_num():
             self.set_current_page(curr + 1)
 
+    @abstractmethod
+    def data_provider(self, page: int, page_size: int) -> Observable[page.Page[T]]:
+        pass
+    
+    @abstractmethod
+    def column_provider(self, data: T) -> None:
+        pass
+
+    @abstractmethod
+    def instance_provider(self, tuple: Tuple[str]) -> T:
+        pass
+
     def __on_selection(self, event: Event) -> None:
         selected_items = self.selection()
         if selected_items:
-            self.__selected_subject.on_next(self.__instance_supplier(self.item(selected_items[0], 'values')))
-
-    def set_column_title(self, columns: List[str]) -> TT:
-        self["columns"] = columns
-        for col in columns:
-            self.heading(col, text = col)
-        return self
+            self.__selected_subject.on_next(self.instance_provider(self.item(selected_items[0], 'values')))
     
     def get_load_subject(self) -> Subject:
         return self.__load_subject
@@ -274,26 +280,27 @@ class LabelEntryPair(BaseFrame):
 
     def draw_compnent(self, label_name: str, default_value: str, editable: bool, input_subject: Subject) -> None:
         label = Label(self, text = label_name, width = 20, anchor = E)
-        self.set_label_style(label)
         entry_var = StringVar()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
         entry = Entry(self, width = 30, relief = FLAT, borderwidth = 3, textvariable = entry_var)
         entry.insert(0, default_value)
         if not editable:
             entry.config(state = "readonly")
-        entry.pack(side = LEFT, fill = X, expand = True, padx = 20)
         tip_label = Label(self, width = 150)
-        tip_label.pack(side = LEFT, fill = X, expand = True)
         self.__tip_label = tip_label
+        self.set_style(label, entry, tip_label)
     
-    def set_label_style(self, label: Label) -> None:
+    def set_style(self, label: Label, entry: Label, tip: Label) -> None:
         label.pack(side = LEFT, fill = X, expand = True, padx = 20)
+        entry.pack(side = LEFT, fill = X, expand = True, padx = 20)
+        tip.pack(side = LEFT, fill = X, expand = True)
 
     def get_input_subject(self) -> Subject:
         return self.__input_subject
 
     def set_tip(self, tip: str) -> None:
         self.__tip_label.config(text = tip, fg = "red", anchor = W)
+
 
 S = TypeVar("S", bound = SelectableEntity)
 
@@ -330,13 +337,16 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
         ).subscribe(lambda dicts: self.config(values = list(dicts.keys())))
 
         self.bind("<<ComboboxSelected>>", lambda _: selected_subject.on_next(self.__data_dict.get(self.get())))
-        self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+        self.set_style()
 
     def get_selected_subject(self) -> Subject:
         return self.__selected_subject
     
     def get_load_subject(self) -> Subject:
         return self.__load_data_subject
+    
+    def set_style(self) -> None:
+        self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
     
 
 class BaseTextBox(Text):
@@ -371,10 +381,13 @@ class BaseSpinBox(Spinbox):
         int_var = IntVar()
         int_var.trace_add("write", lambda x, y, z: self.__selected_subject.on_next(int_var.get()))
         self.config(textvariable = int_var)
-        self.pack(side = TOP, padx = 10, pady = 10, anchor = NW)
+        self.set_style()
 
     def get_selected_subject(self) -> Subject:
         return self.__selected_subject
+    
+    def set_style(self) -> None:
+        self.pack(side = TOP, padx = 10, pady = 10, anchor = NW)
 
 
 class SearchBar(BaseFrame):
@@ -392,15 +405,15 @@ class SearchBar(BaseFrame):
         self.pack(side = TOP)
 
     def draw_compnent(self, label_name: str, input_subject: Subject) -> None:
-        label = Label(self, text = label_name, width = 20, anchor = E)
-        self.set_label_style(label)
+        label = Label(self, text = label_name, width = 20)
         entry_var = StringVar()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
         entry = Entry(self, width = 30, relief = FLAT, borderwidth = 3, textvariable = entry_var)
-        entry.pack(side = LEFT, fill = X, expand = True, padx = 20)
+        self.set_style(label, entry)
 
-    def set_label_style(self, label: Label) -> None:
-        label.pack(side = LEFT, fill = X, expand = True, padx = 20)
+    def set_style(self, label: Label, entry: Entry) -> None:
+        label.pack(side = LEFT, padx = 20, anchor = E)
+        entry.pack(side = LEFT, padx = 20, anchor = E)
 
     def get_input_subject(self) -> Subject:
         return self.__input_subject
