@@ -33,11 +33,11 @@ def page_customers(pattern: CustomerListFilterEntity, page_num: int, page_size: 
 
 def add_customer(entity: CustomerAddEntity) -> Observable[str]:
     CustomerEntity.append_customer(entity.get_customer_name(), entity.get_customer_balance())
-    return reactivex.create(lambda obj, _: obj.on_next("success"))
+    return reactivex.of("success")
 
 def edit_customer(entity: CustomerEditEntity) -> Observable[str]:
     CustomerEntity.edit_customer(entity.get_customer_id(), entity.get_customer_name(), entity.get_customer_balance())
-    return reactivex.create(lambda obj, _: obj.on_next("success"))
+    return reactivex.of("success")
 
 def all_products() -> Observable[List[ProductViewEntity]]:
     return reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
@@ -61,8 +61,8 @@ def page_products(pattern: ProductListFilterEntity, page_num: int, page_size: in
 
 def add_product(entity: ProductAddEntity) -> Observable[str]:
     ProductEntity.append_product(entity.get_product_name(), entity.get_product_price())
-    return reactivex.create(lambda obj, _: obj.on_next("success"))
+    return reactivex.of("success")
 
 def edit_product(entity: ProductViewEntity) -> Observable[str]:
     ProductEntity.edit_product(entity.get_product_id(), entity.get_product_name(), entity.get_product_price())
-    return reactivex.create(lambda obj, _: obj.on_next("success"))
+    return reactivex.of("success")
