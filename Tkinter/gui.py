@@ -92,7 +92,7 @@ class ReactiveListProductButton(AbstractMenuButton):
 
     def render_compnent(self, frame: BaseFrame) -> None:
         table = PageableTreeTable[ProductViewEntity](frame,
-            lambda page, page_size: handler.list_all_products(page, page_size),
+            lambda page, page_size: handler.page_all_products(page, page_size),
             lambda table, data: table.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price())),
             lambda tuple: ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
         )
@@ -174,7 +174,7 @@ class CreateOrderFrame(BaseFrame):
 
         label = Label(customer_select_frame, text = "Please select a customer :")
         label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        customer_select_box = PrefixSearchCombobox[abstract_interface.Customer](customer_select_frame, lambda: handler.list_all_customers(), lambda c: "{0}({1})".format(c.get_customer_name(), c.get_customer_id()))
+        customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: handler.list_all_customers(), lambda c: "{0}(ID:{1})".format(c.get_customer_name(), c.get_customer_id()))
         customer_select_box.get_load_subject().on_next(None)
         customer_text_box = BaseTextBox(customer_show_frame)
         customer_select_box.get_selected_subject().pipe(
@@ -195,7 +195,7 @@ class CreateOrderFrame(BaseFrame):
 
         label = Label(product_select_frame, text = "Please select a product :")
         label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        product_select_box = PrefixSearchCombobox[abstract_interface.Product](product_select_frame, lambda: handler.list_all_customers(), lambda c: "{0}({1})".format(c.get_customer_name(), c.get_customer_id()))
+        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame, lambda: handler.list_all_customers(), lambda c: "{0}({1})".format(c.get_customer_name(), c.get_customer_id()))
         product_select_box.get_load_subject().on_next(None)
         product_text_box = BaseTextBox(product_show_frame)
 
