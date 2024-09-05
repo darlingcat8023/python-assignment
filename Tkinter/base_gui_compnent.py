@@ -135,8 +135,6 @@ class OptionButton(AbstractButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
 
 
-TT = TypeVar("TT", bound = "PageableTreeTable")
-
 class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
     class PrevButton(AbstractButton):

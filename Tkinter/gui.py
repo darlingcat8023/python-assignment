@@ -213,18 +213,18 @@ class CreateOrderFrame(BaseFrame):
         product_num_label = Label(product_select_frame_1, text = "Please select quntity :")
         product_num_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
         spin = BaseSpinBox(product_select_frame_1)
-        spin.config(state = "disabled")
+        spin.config(state = DISABLED)
         add_button = CreateOrderFrame.AddOrderProductButton(product_select_frame_1, "Add To Order", Subject())
-        add_button.config(state = "disabled")
+        add_button.config(state = DISABLED)
         product_text_box = BaseTextBox(product_show_frame, heigh = 12)
 
         product_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_temp_entity(item.get_product_id(), item.get_product_name(), item.get_product_price()))
-        ).subscribe(lambda item: spin.config(state = "normal"))
+        ).subscribe(lambda item: spin.config(state = NORMAL))
 
         spin.get_selected_subject().pipe(
             operators.do_action(lambda num: entity.set_temp_num(num))
-        ).subscribe(lambda item: add_button.config(state = "normal"))
+        ).subscribe(lambda item: add_button.config(state = NORMAL))
 
         add_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
