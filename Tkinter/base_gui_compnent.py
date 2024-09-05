@@ -130,7 +130,6 @@ class OptionButton(AbstractButton):
     
     def __init__(self, parent: BaseFrame, name: str, subject: Subject) -> None:
         super().__init__(parent, name, subject)
-        
 
     def display_button(self) -> None:
         self.pack(side = RIGHT, padx = 10, pady = 10)
@@ -337,10 +336,10 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
 
 class BaseTextBox(Text):
     
-    def __init__(self, parent_frame: BaseFrame, width: int = 80, heigh: int = 10) -> None:
+    def __init__(self, parent_frame: BaseFrame, width: int = 50, heigh: int = 5) -> None:
         super().__init__(parent_frame, width = width, height = heigh, borderwidth = 5)
         self.config(state = DISABLED, font = font.Font(size = 15))
-        self.pack(side = RIGHT, padx = 10, pady = 10, anchor = NW)
+        self.pack(side = TOP, padx = 10, pady = 10)
 
     def append_text(self, text: str) -> None:
         self.config(state = NORMAL)
@@ -352,3 +351,22 @@ class BaseTextBox(Text):
         self.delete(1.0, END)
         self.insert(END, text)
         self.config(state = DISABLED)
+
+    def clear_all(self) -> None:
+        self.delete(1.0, END)
+
+
+class BaseSpinBox(Spinbox):
+
+    __selected_subject: Subject
+
+    def __init__(self, parent_frame: Frame, from_: int = 1, to: int = 100) -> None:
+        super().__init__(parent_frame, from_ = 1, to = 100)
+        self.__selected_subject = Subject()
+        int_var = IntVar()
+        int_var.trace_add("write", lambda x, y, z: self.__selected_subject.on_next(int_var.get()))
+        self.config(textvariable = int_var)
+        self.pack(side = TOP, padx = 10, pady = 10, anchor = NW)
+
+    def get_selected_subject(self) -> Subject:
+        return self.__selected_subject

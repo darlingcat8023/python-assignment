@@ -111,41 +111,13 @@ class ReactiveListProductButton(AbstractMenuButton):
 
 class CreateOrderFrame(BaseFrame):
 
-    class OrderCreateEntity:
-
-        class CustomerEntity:
-
-            __customer_id: int
-            __customer_name: str
-            __customer_balance: Decimal
-
-            def __init__(self, id: int, name: str, balance: Decimal) -> None:
-                self.__customer_id = id
-                self.__customer_name = name
-                self.__customer_balance = balance
-
-            def get_customer_id(self) -> int:
-                return self.__customer_id
-            
-            def get_customer_name(self) -> str:
-                return self.__customer_name
-            
-            def get_customer_balance(self) -> Decimal:
-                return self.__customer_balance
-            
-            def print_on_text_box(self, text_box: BaseTextBox) -> None:
-                text_box.replace_text(f"Customer Id:\t\t{self.get_customer_id()}\nCustomer Name:\t\t{self.get_customer_name()}\nCustomer Balance:\t\t{self.get_customer_balance()}")
-
-        __customer: CustomerEntity
+    class AddOrderProductButton(AbstractButton):
         
-        def __init__(self) -> None:
-            self.__customer = None
+        def __init__(self, parent: BaseFrame, name: str, subject: Subject) -> None:
+            super().__init__(parent, name, subject)
 
-        def get_customer(self) -> CustomerEntity:
-            return self.__customer
-
-        def set_customer(self, id: int, name: str, balance: Decimal) -> None:
-            self.__customer = CreateOrderFrame.OrderCreateEntity.CustomerEntity(id, name, balance)
+        def display_button(self) -> None:
+            self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
 
     def __init__(self, frame_holder: FrameHolder) -> None:
         super().__init__(frame_holder.get_base_frame())
@@ -156,7 +128,7 @@ class CreateOrderFrame(BaseFrame):
         return self.__frame_subject
 
     def draw_compnent(self, frame_holder: FrameHolder) -> None:
-        entity = CreateOrderFrame.OrderCreateEntity()
+        entity = OrderCreateEntity()
         self.render_customer_select_area(entity)
         self.render_product_select_area(entity)
         
@@ -164,11 +136,14 @@ class CreateOrderFrame(BaseFrame):
     def render_customer_select_area(self, entity: OrderCreateEntity) -> None:
         
         customer_frame = BaseFrame(self)
-        customer_frame.set_frame_style(TOP, BOTH, True)
+        customer_frame.set_frame_style(TOP, X, False)
+        
         customer_select_frame = BaseFrame(customer_frame)
         customer_select_frame.set_frame_style(LEFT, BOTH, True)
+        
         customer_show_frame = BaseFrame(customer_frame)
         customer_show_frame.set_frame_style(LEFT, BOTH, True)
+        
         customer_frame.display_frame()
         customer_select_frame.display_frame()
         customer_show_frame.display_frame()
@@ -180,25 +155,52 @@ class CreateOrderFrame(BaseFrame):
         customer_text_box = BaseTextBox(customer_show_frame)
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
-            operators.map(lambda item: entity.get_customer())
-        ).subscribe(lambda item: item.print_on_text_box(customer_text_box))
+            operators.map(lambda _: entity)
+        ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_customer_box()))
 
     def render_product_select_area(self, entity: OrderCreateEntity) -> None:
+        
         product_frame = BaseFrame(self)
-        product_frame.set_frame_style(TOP, BOTH, True)
+        product_frame.set_frame_style(TOP, X, False)
+
         product_select_frame = BaseFrame(product_frame)
         product_select_frame.set_frame_style(LEFT, BOTH, True)
+        
+        product_select_frame_1 = BaseFrame(product_select_frame)
+        product_select_frame_1.set_frame_style(LEFT, BOTH, True)
+        
         product_show_frame = BaseFrame(product_frame)
         product_show_frame.set_frame_style(LEFT, BOTH, True)
+        
         product_frame.display_frame()
         product_select_frame.display_frame()
+        product_select_frame_1.display_frame()
         product_show_frame.display_frame()
 
-        label = Label(product_select_frame, text = "Please select a product :")
-        label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame, lambda: handler.all_products())
+        product_label = Label(product_select_frame_1, text = "Please select a product :")
+        product_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame_1, lambda: handler.all_products())
         product_select_box.get_load_subject().on_next(None)
-        product_text_box = BaseTextBox(product_show_frame)
+        product_num_label = Label(product_select_frame_1, text = "Please select quntity :")
+        product_num_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+        spin = BaseSpinBox(product_select_frame_1)
+        spin.config(state = "disabled")
+        add_button = CreateOrderFrame.AddOrderProductButton(product_select_frame_1, "Add To Order", Subject())
+        add_button.config(state = "disabled")
+        product_text_box = BaseTextBox(product_show_frame, heigh = 12)
+
+        product_select_box.get_selected_subject().pipe(
+            operators.do_action(lambda item: entity.set_temp_entity(item.get_product_id(), item.get_product_name(), item.get_product_price()))
+        ).subscribe(lambda item: spin.config(state = "normal"))
+
+        spin.get_selected_subject().pipe(
+            operators.do_action(lambda num: entity.set_temp_num(num))
+        ).subscribe(lambda item: add_button.config(state = "normal"))
+
+        add_button.get_button_subject().pipe(
+            operators.map(lambda _: entity),
+            operators.do_action(lambda _: entity.confirm_product())
+        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
 
 class ReactiveCreateNewOrderButton(AbstractMenuButton):
     

@@ -90,7 +90,7 @@ class CustomerViewEntity(CustomerEditEntity, SelectableEntity):
         super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](balance, None))
 
     def get_selection_key(self) -> str:
-        return "{0}(ID:{1})".format(self.get_customer_name(), self.get_customer_id())
+        return "{0} [ID:{1}]".format(self.get_customer_name(), self.get_customer_id())
 
 class ProductAddEntity:
 
@@ -150,4 +150,128 @@ class ProductViewEntity(ProductEditEntity, SelectableEntity):
         super().__init__(FieldWrapper[int](id, None), FieldWrapper[str](name, None), FieldWrapper[Decimal](price, None))
 
     def get_selection_key(self) -> str:
-        return "{0}(ID:{1})".format(self.get_product_name(), self.get_product_id())
+        return "{0} [ID:{1}]".format(self.get_product_name(), self.get_product_id())
+    
+
+class OrderCreateEntity:
+
+    class OrderCustomerEntity:
+
+        __customer_id: int
+        __customer_name: str
+        __customer_balance: Decimal
+
+        def __init__(self, id: int, name: str, balance: Decimal) -> None:
+            self.__customer_id = id
+            self.__customer_name = name
+            self.__customer_balance = balance
+
+        def get_customer_id(self) -> int:
+            return self.__customer_id
+        
+        def get_customer_name(self) -> str:
+            return self.__customer_name
+        
+        def get_customer_balance(self) -> Decimal:
+            return self.__customer_balance
+        
+        def text_print_on_text_box(self) -> None:
+            return f"Customer Id:\t\t{self.get_customer_id()}\nCustomer Name:\t\t{self.get_customer_name()}\nCustomer Balance:\t\t{self.get_customer_balance()}"
+        
+    class OrderProductEntity:
+
+        __product_id: int
+        __product_name: str
+        __product_price: Decimal
+        __product_num: int
+        __product_sub_total: Decimal
+
+        def __init__(self, id: int, name: str, price: Decimal, num: int = 0, sub_total: Decimal = Decimal(0.00)) -> None:
+            self.__product_id = id
+            self.__product_name = name
+            self.__product_price = price
+            self.__product_num = num
+            self.__product_sub_total = sub_total
+
+        def get_product_id(self) -> int:
+            return self.__product_id
+        
+        def get_product_name(self) -> str:
+            return self.__product_name
+        
+        def get_product_price(self) -> Decimal:
+            return self.__product_price
+        
+        def get_product_num(self) -> int:
+            return self.__product_num
+
+        def get_product_sub_total(self) -> Decimal:
+            return self.__product_sub_total
+        
+        def set_product_id(self, id: int) -> None:
+            self.__product_id = id
+
+        def set_product_name(self, name: str) -> None:
+            self.__product_name = name
+
+        def set_product_price(self, price: Decimal) -> None:
+            self.__product_price = price
+            self.recalculate_total()
+
+        def set_product_num(self, num: int) -> None:
+            self.__product_num = num
+            self.recalculate_total()
+
+        def set_product_sub_total(self, sub_total: Decimal) -> None:
+            self.__product_sub_total = sub_total
+
+        def recalculate_total(self) -> None:
+            if self.get_product_num() is None:
+                return
+            if self.get_product_price() is None:
+                return
+            self.set_product_sub_total(self.get_product_num() * self.get_product_price())
+ 
+        def text_print_on_text_box(self) -> None:
+            return f"Product Id:\t{self.get_product_id()}\tProduct Name:\t{self.get_product_name()}\nProduct Num:\t{self.get_product_num()}\tProduct Price:\t{self.get_product_price()}\nSub Total:\t{self.get_product_sub_total()}"
+
+    __customer: OrderCustomerEntity
+    __temp_entity: OrderProductEntity
+    __items: List[OrderProductEntity]
+    
+    def __init__(self) -> None:
+        self.__customer = None
+        self.__temp_entity = OrderCreateEntity.OrderProductEntity(None, None, None)
+        self.__items = []
+
+    def get_customer(self) -> OrderCustomerEntity:
+        return self.__customer
+    
+    def get_order_items(self) -> List[OrderProductEntity]:
+        return self.__items
+
+    def set_customer(self, id: int, name: str, balance: Decimal) -> None:
+        self.__customer = OrderCreateEntity.OrderCustomerEntity(id, name, balance)
+
+    def set_temp_entity(self, id: int, name: str, price: Decimal) -> None:
+        self.__temp_entity.set_product_id(id)
+        self.__temp_entity.set_product_name(name)
+        self.__temp_entity.set_product_price(price)
+
+    def set_temp_num(self, num: int) -> None:
+        self.__temp_entity.set_product_num(num)
+
+    def confirm_product(self) -> None:
+        ent = self.__temp_entity
+        items = self.get_order_items()
+        item = next((p for p in items if p.get_product_id() == ent.get_product_id()), None)
+        if item is None:
+            items.append(OrderCreateEntity.OrderProductEntity(ent.get_product_id(), ent.get_product_name(), ent.get_product_price(), ent.get_product_num(), ent.get_product_sub_total()))
+        else:
+            item.set_product_num(item.get_product_num() + ent.get_product_num())
+
+    def text_print_on_customer_box(self) -> None:
+        return self.get_customer().text_print_on_text_box()
+    
+    def text_print_on_product_box(self) -> None:
+        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items())))
