@@ -11,13 +11,13 @@ from view_model import *
 CustomerEntity.init_data_set()
 ProductEntity.init_data_set()
 
-def list_all_customers() -> Observable[List[Customer]]:
+def all_customers() -> Observable[List[CustomerViewEntity]]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
         operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
         operators.to_iterable()
     )
 
-def page_all_customers(page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
+def page_customers(page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
     list = CustomerEntity.get_customer_list()
     return reactivex.from_iterable(list).pipe(
         operators.skip(page_size * page_num),
@@ -35,7 +35,13 @@ def edit_customer(entity: CustomerEditEntity) -> Observable[str]:
     CustomerEntity.edit_customer(entity.get_customer_id(), entity.get_customer_name(), entity.get_customer_balance())
     return reactivex.create(lambda obj, _: obj.on_next("success"))
 
-def page_all_products(page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
+def all_products() -> Observable[List[ProductViewEntity]]:
+    return reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
+        operators.map(lambda item: ProductViewEntity(item.get_product_id(), item.get_product_name(), item.get_product_price())),
+        operators.to_iterable()
+    )
+
+def page_products(page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
     list = ProductEntity.get_product_list()
     return reactivex.from_iterable(list).pipe(
         operators.skip(page_size * page_num),
