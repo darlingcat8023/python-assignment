@@ -7,6 +7,7 @@ import abc, handler, page, customer, math, reactivex
 from decimal import Decimal
 from base_gui_compnent import *
 from view_model import *
+from page import *
 
 class MethodInvoker:
 
@@ -70,7 +71,7 @@ class ReactiveListCustomerButton(AbstractMenuButton):
 
         class Table(PageableTreeTable[CustomerViewEntity]):
 
-            def data_provider(self, page: int, page_size: int) -> Observable[handler.Page]:
+            def data_provider(self, page: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
                 return handler.page_customers(entity, page, page_size)
             
             def column_provider(self, data: CustomerViewEntity) -> None:
@@ -112,7 +113,7 @@ class ReactiveListProductButton(AbstractMenuButton):
         
         class Table(PageableTreeTable[ProductViewEntity]):
 
-            def data_provider(self, page: int, page_size: int) -> Observable[handler.Page]:
+            def data_provider(self, page: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
                 return handler.page_products(entity, page, page_size)
             
             def column_provider(self, data: ProductViewEntity) -> None:
@@ -160,7 +161,7 @@ class CreateOrderFrame(BaseFrame):
         entity = OrderCreateEntity()
         self.render_customer_select_area(entity)
         self.render_product_select_area(entity)
-        
+        self.render_option_area(entity)
 
     def render_customer_select_area(self, entity: OrderCreateEntity) -> None:
         
@@ -230,6 +231,24 @@ class CreateOrderFrame(BaseFrame):
             operators.map(lambda _: entity),
             operators.do_action(lambda _: entity.confirm_product())
         ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
+
+    def render_payment_area(self, entity: OrderCreateEntity) -> None:
+        payment_frame = BaseFrame(self)
+        payment_frame.set_frame_style(TOP, X, False)
+    
+    def render_option_area(self, entity: OrderCreateEntity) -> None:
+        option_frame = BaseFrame(self)
+        option_frame.set_frame_style(TOP, X, True)
+        option_frame.display_frame()
+
+        class OperateButton(OptionButton):
+
+            def display_button(self) -> None:
+                self.pack(side = RIGHT, padx = 10, pady = 10, anchor = SE)
+    
+        submit_button = OperateButton(option_frame, "Submit", Subject())
+        pay_button = OperateButton(option_frame, "Pay", Subject())
+
 
 class ReactiveCreateNewOrderButton(AbstractMenuButton):
     

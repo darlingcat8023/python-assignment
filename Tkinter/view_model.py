@@ -268,11 +268,13 @@ class OrderCreateEntity:
     __customer: OrderCustomerEntity
     __temp_entity: OrderProductEntity
     __items: List[OrderProductEntity]
+    __order_price: Decimal
     
     def __init__(self) -> None:
         self.__customer = None
         self.__temp_entity = OrderCreateEntity.OrderProductEntity(None, None, None)
         self.__items = []
+        self.__order_price = Decimal(0.00)
 
     def get_customer(self) -> OrderCustomerEntity:
         return self.__customer
@@ -296,12 +298,18 @@ class OrderCreateEntity:
         items = self.get_order_items()
         item = next((p for p in items if p.get_product_id() == ent.get_product_id()), None)
         if item is None:
-            items.append(OrderCreateEntity.OrderProductEntity(ent.get_product_id(), ent.get_product_name(), ent.get_product_price(), ent.get_product_num(), ent.get_product_sub_total()))
+            item = OrderCreateEntity.OrderProductEntity(ent.get_product_id(), ent.get_product_name(), ent.get_product_price(), ent.get_product_num(), ent.get_product_sub_total())
+            items.append(item)
+            self.__order_price += item.get_product_sub_total()
         else:
             item.set_product_num(item.get_product_num() + ent.get_product_num())
+            self.__order_price +=  ent.get_product_num() * ent.get_product_price()
+
+    def get_order_price(self) -> Decimal:
+        return self.__order_price
 
     def text_print_on_customer_box(self) -> None:
         return self.get_customer().text_print_on_text_box()
     
     def text_print_on_product_box(self) -> None:
-        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items())))
+        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items()))) + f"\n\nOrder Total:\t{self.get_order_price()}"
