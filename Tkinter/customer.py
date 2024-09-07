@@ -1,6 +1,9 @@
 from decimal import Decimal
 from typing import List
-from abstract_entity import Customer
+from abstract_entity import *
+import datetime
+
+date_formate = "%d/%m/%Y %H:%M:%S" 
 
 class CustomerEntity(Customer):
 
@@ -37,6 +40,7 @@ class CustomerEntity(Customer):
         self.__customer_id: int = customer_id
         self.__customer_balance: str = customer_balance
         self.__customer_name: Decimal = customer_name
+        self.__customer_payment: List[Payment] = []
 
     def get_customer_id(self) -> int:
         return self.__customer_id
@@ -46,12 +50,32 @@ class CustomerEntity(Customer):
 
     def get_customer_name(self) -> str:
         return self.__customer_name
-
-    def set_customer_balance(self, value: Decimal) -> Customer:
-        self.__customer_balance = value
-        return self
     
-    def set_customer_name(self, name: str) -> Customer:
-        assert name is not None and len(name) > 0
+    def get_payment_list(self) -> List[Payment]:
+        return self.__customer_payment
+
+    def set_customer_balance(self, value: Decimal) -> None:
+        self.__customer_balance = value
+    
+    def set_customer_name(self, name: str) -> None:
         self.__customer_name = name
-        return self
+    
+    def add_customer_entity(self, balance: Decimal) -> None:
+        self.set_customer_balance(self.get_customer_balance() + balance)
+
+    def add_payment(self, amount: Decimal) -> None:
+        self.set_customer_balance(self.get_customer_balance() - amount)
+        self.get_payment_list().append(PaymentEntity(amount))
+        
+
+class PaymentEntity(Payment):
+
+    def __init__(self, payment_amount: Decimal) -> None:
+        self.__payment_amount = payment_amount
+        self.__payment_date = datetime.strftime(datetime.now(), date_formate)
+
+    def get_payment_amount(self) -> Decimal:
+        return  self.__payment_amount
+    
+    def get_payment_date(self) -> str:
+        return self.__payment_date

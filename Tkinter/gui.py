@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import Event, Frame, ttk
+from tkinter import Event, Frame, Label, ttk
 from typing import TypeVar, List, Callable, Generic, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
@@ -153,11 +153,13 @@ class CreateOrderFrame(BaseFrame):
 
     def draw_compnent(self, frame_holder: FrameHolder) -> None:
         entity = OrderCreateEntity()
-        self.render_customer_select_area(entity)
+        payment_entity = PaymentCreateEntity()
+        self.render_customer_select_area(entity, payment_entity)
         self.render_product_select_area(entity)
-        self.render_option_area(entity)
+        self.render_payment_area(entity, payment_entity)
+        self.render_option_area(entity, payment_entity)
 
-    def render_customer_select_area(self, entity: OrderCreateEntity) -> None:
+    def render_customer_select_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
         
         customer_frame = BaseFrame(self)
         customer_frame.set_frame_style(TOP, X, False)
@@ -180,6 +182,7 @@ class CreateOrderFrame(BaseFrame):
         
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
+            operators.do_action(lambda item: payment_entity.set_sustomer_id(item.get_customer_id())),
             operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id()))
         ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
 
@@ -245,11 +248,32 @@ class CreateOrderFrame(BaseFrame):
             operators.do_action(lambda _: add_button.config(state = DISABLED))
         ).subscribe()
 
-    def render_payment_area(self, entity: OrderCreateEntity) -> None:
+    def render_payment_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
         payment_frame = BaseFrame(self)
         payment_frame.set_frame_style(TOP, X, False)
+        payment_frame.display_frame()
+        
+        class PaymentEntry(LabelEntryPair):
+
+            def display_frame(self) -> None:
+                self.pack(side = TOP, fill = X, expand = False)
+
+            def set_style(self, label: Label, entry: Label, tip: Label) -> None:
+                label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+                entry.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+                tip.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+        
+        payment_entry = PaymentEntry(payment_frame, "Pay Amount:", anchor = W)
+        payment_entry.disable_input()
+        payment_entity.set_payment_amount_error_hanlder(lambda ipt: payment_entry.set_tip("Invalid Payment Amount Input"))
+
+        payment_entry.get_input_subject().pipe(
+            operators.do_action(lambda _: payment_entry.set_tip(""))
+        ).subscribe(lambda ipt: payment_entity.set_payment_amount(MethodInvoker.execute(lambda: Decimal(ipt))))
+
+        self.get_submit_subject().subscribe(lambda _: payment_entry.enable_input())
     
-    def render_option_area(self, entity: OrderCreateEntity) -> None:
+    def render_option_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
         option_frame = BaseFrame(self)
         option_frame.set_frame_style(TOP, BOTH, True)
         option_frame.display_frame()
@@ -271,7 +295,11 @@ class CreateOrderFrame(BaseFrame):
             operators.do_action(lambda _: pay_button.config(state = NORMAL))
         ).subscribe(self.get_submit_subject())
 
-
+        pay_button.get_button_subject().pipe(
+            operators.filter(lambda _: payment_entity.is_ready_for_submit()),
+            operators.do_action(lambda _: handler.create_new_payment(payment_entity)),
+            operators.filter(lambda res: res == "success")
+        ).subscribe(self.get_submit_subject())
 
 class ReactiveCreateNewOrderButton(AbstractMenuButton):
     
@@ -315,7 +343,7 @@ class AddCustomerFrame(BaseFrame):
         customer_balance_entry.get_input_subject().pipe(
             operators.do_action(lambda _: customer_balance_entry.set_tip(""))
         ).subscribe(
-            on_next = lambda ipt: entity.set_customer_balance(Decimal(ipt)),
+            on_next = lambda ipt: entity.set_customer_balance(MethodInvoker.execute(lambda: Decimal(ipt))),
             on_error = lambda error: print(f"{error}")
         )
         

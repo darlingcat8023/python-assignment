@@ -74,4 +74,15 @@ def edit_product(entity: ProductViewEntity) -> Observable[str]:
     return reactivex.of("success")
 
 def create_new_order(entity: OrderCreateEntity) -> Observable[str]:
-    return reactivex.of("success")
+    return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+        operators.filter(lambda customer: customer.get_customer_id() == entity.get_customer().get_customer_id()),
+        operators.do_action(lambda customer: customer.add_customer_entity(entity.get_order_price())),
+        operators.map(lambda _: "success")
+    )
+
+def create_new_payment(entity: PaymentCreateEntity) -> Observable[str]:
+    return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+        operators.filter(lambda customer: customer.get_customer_id() == entity.get_customer().get_customer_id()),
+        operators.do_action(lambda customer: customer.add_payment(entity.get_payment_amount())),
+        operators.map(lambda _: "success")
+    )

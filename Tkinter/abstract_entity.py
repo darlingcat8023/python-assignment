@@ -1,51 +1,71 @@
-import abc
+from abc import *
 from decimal import Decimal
 from typing import *
+import datetime
 
-C = TypeVar('C', bound = 'Customer')
+class Payment(ABC):
 
-class Customer(abc.ABC):
+    @abstractmethod
+    def get_payment_amount(self) -> Decimal:
+        pass
 
-    @abc.abstractmethod
+    @abstractmethod
+    def get_payment_date(self) -> str:
+        pass
+
+class Customer(ABC):
+
+    @abstractmethod
     def get_customer_id(self) -> int:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_customer_balance(self) -> Decimal:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_customer_name(self) -> str:
         pass
 
-    @abc.abstractmethod
-    def set_customer_balance(self, value: Decimal) -> C:
+    @abstractmethod
+    def get_payment_list(self) -> List[Payment]:
+        pass
+
+    @abstractmethod
+    def set_customer_balance(self, value: Decimal) -> None:
         pass
     
-    @abc.abstractmethod
-    def set_customer_name(self, name: str) -> C:
+    @abstractmethod
+    def set_customer_name(self, name: str) -> None:
         pass
 
-P = TypeVar('P', bound = 'Product')
+    @abstractmethod
+    def add_customer_entity(self, balance: Decimal) -> None:
+        pass
 
-class Product(abc.ABC):
+    @abstractmethod
+    def add_payment(self, amount: Decimal) -> None:
+        pass
 
-    @abc.abstractmethod
+
+class Product(ABC):
+
+    @abstractmethod
     def get_product_id(self) -> int:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_product_name(self) -> str:
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def get_product_price(self) -> Decimal:
         pass
 
-    @abc.abstractmethod
-    def set_product_name(self, value: str) -> C:
+    @abstractmethod
+    def set_product_name(self, value: str) -> None:
         pass
     
-    @abc.abstractmethod
-    def set_product_price(self, name: Decimal) -> C:
+    @abstractmethod
+    def set_product_price(self, name: Decimal) -> None:
         pass

@@ -263,21 +263,22 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
 class LabelEntryPair(BaseFrame):
 
+    __entry: Entry
     __tip_label: Label
     __input_subject: Subject
     
-    def __init__(self, parent: Frame, label_name: str, /, *, default_value: str = "", editable: bool= True, width: int = -1) -> None:
+    def __init__(self, parent: Frame, label_name: str, /, *, anchor: str = W, default_value: str = "", editable: bool= True, width: int = -1) -> None:
         BaseFrame.__init__(self, parent, width = width)
         input_subject = Subject()
         self.__input_subject = input_subject
-        self.draw_compnent(label_name, default_value, editable, input_subject)
+        self.draw_compnent(label_name, anchor, default_value, editable, input_subject)
         self.display_frame()
 
     def display_frame(self) -> None:
         self.pack(side = TOP, fill = X, expand = True)
 
-    def draw_compnent(self, label_name: str, default_value: str, editable: bool, input_subject: Subject) -> None:
-        label = Label(self, text = label_name, width = 20, anchor = E)
+    def draw_compnent(self, label_name: str, anchor: str, default_value: str, editable: bool, input_subject: Subject) -> None:
+        label = Label(self, text = label_name, width = 20, anchor = anchor)
         entry_var = StringVar()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
         entry = Entry(self, width = 30, relief = FLAT, borderwidth = 3, textvariable = entry_var)
@@ -285,6 +286,7 @@ class LabelEntryPair(BaseFrame):
         if not editable:
             entry.config(state = "readonly")
         tip_label = Label(self, width = 150)
+        self.__entry = entry
         self.__tip_label = tip_label
         self.set_style(label, entry, tip_label)
     
@@ -298,6 +300,12 @@ class LabelEntryPair(BaseFrame):
 
     def set_tip(self, tip: str) -> None:
         self.__tip_label.config(text = tip, fg = "red", anchor = W)
+
+    def disable_input(self) -> None:
+        self.__entry.config(state = DISABLED)
+
+    def enable_input(self) -> None:
+        self.__entry.config(state = NORMAL)
 
 
 S = TypeVar("S", bound = SelectableEntity)

@@ -146,7 +146,7 @@ class ProductAddEntity:
             return False
         if self.get_product_price() is None:
             handler = self.__product_price.get_error_handler()
-            if handler is not None : handler(self.get_customer_balance()).set_tip("Invalid Product Price input")
+            if handler is not None : handler(self.get_product_price())
             return False
         return True
     
@@ -312,4 +312,35 @@ class OrderCreateEntity:
         return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items()))) + f"\n\nOrder Total:\t{self.get_order_price()}"
     
     def is_reay_for_submit(self) -> None:
+        return True
+    
+class PaymentCreateEntity:
+
+    __customer_id: FieldWrapper[int]
+    __payment_amount: FieldWrapper[Decimal]
+
+    def __init__(self) -> None:
+        self.__customer_id = FieldWrapper[int](None, None)
+        self.__payment_amount = FieldWrapper[Decimal](Decimal(0.00), None)
+
+    def get_sustomer_id(self) -> int:
+        return self.__customer_id.get_value()
+
+    def get_payment_amount(self) -> Decimal:
+        return self.__payment_amount.get_value()
+    
+    def set_payment_amount_error_hanlder(self, handler: Callable[[Decimal], None]) -> None:
+        self.__payment_amount.set_error_handler(handler)
+
+    def set_sustomer_id(self, id: int) -> None:
+        self.__customer_id.set_value(id)
+
+    def set_payment_amount(self, amount: Decimal) -> None:
+        self.__payment_amount.set_value(amount)
+
+    def is_ready_for_submit(self) -> bool:
+        if self.get_payment_amount() <= 0:
+            handler = self.__product_price.get_error_handler()
+            if handler is not None : handler(self.get_payment_amount())
+            return False
         return True
