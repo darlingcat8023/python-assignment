@@ -33,14 +33,3 @@ class BaseSpinBox(Spinbox):
 
 
 print(datetime.strftime(datetime.now(), "%d/%m/%Y %H:%M:%S" ))
-
-
-class B:
-
-    value: str
-
-class A:
-
-    id: int
-    values: List[B]
-

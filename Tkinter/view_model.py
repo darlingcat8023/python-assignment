@@ -308,7 +308,10 @@ class OrderCreateEntity:
         return self.__order_price
     
     def text_print_on_product_box(self) -> None:
-        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items()))) + f"\n\nOrder Total:\t{self.get_order_price()}"
+        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items())))
+    
+    def text_print_on_product_box_with_total(self) -> None:
+        return self.text_print_on_product_box() + f"\n\nOrder Total:\t{self.get_order_price()}"
     
     def is_reay_for_submit(self) -> None:
         return True
@@ -368,3 +371,39 @@ class PaymentViewEneity:
     
     def get_payment_date(self) -> str:
         return self.__payment_date
+    
+
+class OrderViewEntity:
+
+    __customer_id: int
+    __customer_name: str
+    __order_id: int
+    __order_date: str
+    __order_items: List[OrderCreateEntity.OrderProductEntity]
+    __order_total: Decimal
+
+    def __init__(self, customer_id: int, customer_name: str, order_id: int, order_date: str, order_items: List[OrderCreateEntity.OrderProductEntity], order_total: Decimal) -> None:
+        self.__customer_id = customer_id
+        self.__customer_name = customer_name
+        self.__order_id = order_id
+        self.__order_date = order_date
+        self.__order_items = order_items
+        self.__order_total = order_total
+
+    def get_customer_id(self) -> int:
+        return self.__customer_id
+    
+    def get_customer_name(self) -> str:
+        return self.__customer_name
+    
+    def get_order_id(self) -> int:
+        return self.__order_id
+    
+    def get_order_date(self) -> str:
+        return self.__order_date
+    
+    def get_formated_items(self) -> str:
+        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.__order_items)))
+
+    def get_order_total(self) -> Decimal:
+        return self.__order_total

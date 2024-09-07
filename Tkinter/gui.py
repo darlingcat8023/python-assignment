@@ -41,6 +41,7 @@ class GUI(Frame):
         ReactiveListCustomerButton(menu_frame, "List All Customers", frame_holder, Subject())
         ReactiveListProductButton(menu_frame, "List All Products", frame_holder, Subject())
         ReactiveListPaymentsButton(menu_frame, "List All Payments", frame_holder, Subject())
+        ReactiveListOrdersButton(menu_frame, "List All Orders", frame_holder, Subject())
         ReactiveCreateNewOrderButton(menu_frame, "Create New Order", frame_holder, Subject())
         
 
@@ -138,6 +139,45 @@ class ReactiveListProductButton(AbstractMenuButton):
         table.get_selected_subject().pipe(
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
+
+
+class ReactiveListOrdersButton(AbstractMenuButton):
+
+    def __init__(self, menu_frame: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject) -> None:
+        super().__init__(menu_frame, name, frame_holder, subject)
+
+    def display_button(self) -> None:
+        self.pack(side = TOP, fill = X, padx = 10, pady = 10)
+
+    def render_compnent(self, frame: BaseFrame) -> None:
+        
+        entity = CustomerListFilterEntity()
+        customer_search= SearchBar(frame, "Customer Name:")
+
+        class Table(PageableTreeTable[OrderViewEntity]):
+
+            def data_provider(self, page: int, page_size: int) -> Observable[Page[OrderViewEntity]]:
+                return handler.page_orders(entity, page, page_size)
+            
+            def column_provider(self, data: OrderViewEntity) -> None:
+                self.insert("", "end", values = (
+                    data.get_customer_id(), 
+                    data.get_customer_name(), 
+                    data.get_order_id(), 
+                    data.get_order_date(),
+                    data.get_order_total()
+                ))
+
+            def instance_provider(self, tuple: Tuple[str]) -> OrderViewEntity:
+                return None
+        
+        table = Table(frame, ['Customer Id', 'Customer Name', 'Order Id', 'Order Date', 'Order Total'])
+
+        self.get_button_subject().subscribe(table.get_load_subject())
+
+        customer_search.get_input_subject().pipe(
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+        ).subscribe(table.get_load_subject())
 
 
 class ReactiveListPaymentsButton(AbstractMenuButton):
@@ -279,7 +319,7 @@ class CreateOrderFrame(BaseFrame):
         add_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.do_action(lambda _: entity.confirm_product())
-        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
+        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box_with_total()))
 
         self.get_submit_subject().pipe(
             operators.do_action(lambda _: product_select_box.config(state = DISABLED)),
