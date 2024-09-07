@@ -1,11 +1,10 @@
-from customer import CustomerEntity
-from product import ProductEntity
+from model import *
 from page import Page
 from typing import List
 from decimal import Decimal
 from reactivex import operators, Observable
 import reactivex
-from abstract_entity import *
+from Tkinter.abstract_model import *
 from view_model import *
 
 CustomerEntity.init_data_set()
