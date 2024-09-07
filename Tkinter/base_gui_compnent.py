@@ -91,7 +91,8 @@ class AbstractButton(abc.ABC, Button):
         return self.__click_subject
 
     def on_click_event(self, event: Event) -> None:
-        self.__click_subject.on_next(None)
+        if self.cget("state") != DISABLED:
+            self.__click_subject.on_next(None)
 
 
 class AbstractMenuButton(AbstractButton):
@@ -204,10 +205,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
         ).subscribe()
 
         load_subject.pipe(
-            operators.do_action(lambda _: prev_button.config(state = NORMAL if self.get_current_page() > 1 else DISABLED))
-        ).subscribe()
-
-        load_subject.pipe(
+            operators.do_action(lambda _: prev_button.config(state = NORMAL if self.get_current_page() > 1 else DISABLED)),
             operators.do_action(lambda _: next_button.config(state = NORMAL if self.get_current_page() < self.get_max_page_num() else DISABLED))
         ).subscribe()
 
@@ -381,8 +379,8 @@ class BaseSpinBox(Spinbox):
 
     __selected_subject: Subject
 
-    def __init__(self, parent_frame: Frame, from_: int = 1, to: int = 100) -> None:
-        super().__init__(parent_frame, from_ = 1, to = 100)
+    def __init__(self, parent_frame: Frame, from_: int = 0, to: int = 100) -> None:
+        super().__init__(parent_frame, from_ = from_, to = to)
         self.__selected_subject = Subject()
         int_var = IntVar()
         int_var.trace_add("write", lambda x, y, z: self.__selected_subject.on_next(int_var.get()))

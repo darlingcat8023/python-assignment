@@ -234,8 +234,13 @@ class CreateOrderFrame(BaseFrame):
         ).subscribe(lambda item: spin.config(state = NORMAL))
 
         spin.get_selected_subject().pipe(
+            operators.filter(lambda num: num > 0),
             operators.do_action(lambda num: entity.set_temp_num(num))
         ).subscribe(lambda item: add_button.config(state = NORMAL))
+
+        spin.get_selected_subject().pipe(
+            operators.filter(lambda num: num < 1)
+        ).subscribe(lambda item: add_button.config(state = DISABLED))
 
         add_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
