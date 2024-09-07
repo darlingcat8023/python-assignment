@@ -378,7 +378,7 @@ class CreateOrderFrame(BaseFrame):
         pay_button.get_button_subject().pipe(
             operators.filter(lambda _: payment_entity.is_ready_for_submit()),
             operators.flat_map(lambda _: handler.create_new_payment(payment_entity)),
-            operators.filter(lambda res: res == "success")
+            operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Payment Successful!"))
         ).subscribe(self.get_submit_subject())
 
