@@ -281,16 +281,16 @@ class LabelEntryPair(BaseFrame):
         self.__entry.config(state = NORMAL)
 
 
-S = TypeVar("S", bound = SelectableEntity)
+ENT = TypeVar("ENT", bound = SelectableEntity)
 
-class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
+class PrefixSearchCombobox(ttk.Combobox, Generic[ENT]):
 
     def __init__(self, parent_frame: BaseFrame, data_function: Callable[[None], Observable[List[S]]]) -> None:
         super().__init__(parent_frame)
         selected_subject, load_subject = Subject(), Subject()
         self.__selected_subject: Subject = selected_subject
         self.__load_data_subject: Subject = load_subject
-        self.__data_dict: Dict = {}
+        self.__data_dict: Dict[str, ENT] = {}
         entry_var = StringVar()
         input_subject = Subject()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))

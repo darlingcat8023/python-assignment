@@ -4,13 +4,10 @@ T = TypeVar('T')
 
 class Page(Generic[T]):
 
-    __total: int
-    __data: List[T]
-
     def __init__(self, total: int, data: List[T]) -> None:
         super().__init__()
-        self.__total = total
-        self.__data = data
+        self.__total: int = total
+        self.__data: List[T] = data
 
     def get_total(self) -> int:
         return self.__total
