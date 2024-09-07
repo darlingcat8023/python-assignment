@@ -93,6 +93,9 @@ class CustomerViewEntity(CustomerEditEntity, SelectableEntity):
     def get_selection_key(self) -> str:
         return "{0} [ID:{1}]".format(self.get_customer_name(), self.get_customer_id())
     
+    def text_print_on_text_box(self) -> None:
+            return f"Customer Id:\t\t{self.get_customer_id()}\nCustomer Name:\t\t{self.get_customer_name()}\nCustomer Balance:\t\t{self.get_customer_balance()}"
+    
 
 class CustomerListFilterEntity:
 
@@ -205,9 +208,6 @@ class OrderCreateEntity:
         def get_customer_balance(self) -> Decimal:
             return self.__customer_balance
         
-        def text_print_on_text_box(self) -> None:
-            return f"Customer Id:\t\t{self.get_customer_id()}\nCustomer Name:\t\t{self.get_customer_name()}\nCustomer Balance:\t\t{self.get_customer_balance()}"
-        
     class OrderProductEntity:
 
         __product_id: int
@@ -307,9 +307,9 @@ class OrderCreateEntity:
 
     def get_order_price(self) -> Decimal:
         return self.__order_price
-
-    def text_print_on_customer_box(self) -> None:
-        return self.get_customer().text_print_on_text_box()
     
     def text_print_on_product_box(self) -> None:
         return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items()))) + f"\n\nOrder Total:\t{self.get_order_price()}"
+    
+    def is_reay_for_submit(self) -> None:
+        return True

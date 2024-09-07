@@ -141,21 +141,15 @@ class ReactiveListProductButton(AbstractMenuButton):
 
 class CreateOrderFrame(BaseFrame):
 
-    class AddOrderProductButton(AbstractButton):
-        
-        def __init__(self, parent: BaseFrame, name: str, subject: Subject) -> None:
-            super().__init__(parent, name, subject)
-
-        def display_button(self) -> None:
-            self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+    __submit_subject: Subject
 
     def __init__(self, frame_holder: FrameHolder) -> None:
         super().__init__(frame_holder.get_base_frame())
-        self.__frame_subject = Subject()
+        self.__submit_subject = Subject()
         self.draw_compnent(frame_holder)
 
-    def get_frame_subject(self) -> Subject:
-        return self.__frame_subject
+    def get_submit_subject(self) -> Subject:
+        return self.__submit_subject
 
     def draw_compnent(self, frame_holder: FrameHolder) -> None:
         entity = OrderCreateEntity()
@@ -183,10 +177,17 @@ class CreateOrderFrame(BaseFrame):
         customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: handler.all_customers())
         customer_select_box.get_load_subject().on_next(None)
         customer_text_box = BaseTextBox(customer_show_frame)
+        
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
-            operators.map(lambda _: entity)
-        ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_customer_box()))
+            operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id()))
+        ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
+
+        self.get_submit_subject().pipe(
+            operators.do_action(lambda _: customer_select_box.config(state = DISABLED)),
+            operators.flat_map(lambda _: handler.customer_detail(entity.get_customer().get_customer_id())),
+        ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
+
 
     def render_product_select_area(self, entity: OrderCreateEntity) -> None:
         
@@ -215,7 +216,13 @@ class CreateOrderFrame(BaseFrame):
         product_num_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
         spin = BaseSpinBox(product_select_frame_1)
         spin.config(state = DISABLED)
-        add_button = CreateOrderFrame.AddOrderProductButton(product_select_frame_1, "Add To Order", Subject())
+        
+        class AddOrderProductButton(AbstractButton):
+
+            def display_button(self) -> None:
+                self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
+    
+        add_button = AddOrderProductButton(product_select_frame_1, "Add To Order", Subject())
         add_button.config(state = DISABLED)
         product_text_box = BaseTextBox(product_show_frame, heigh = 12)
 
@@ -232,13 +239,19 @@ class CreateOrderFrame(BaseFrame):
             operators.do_action(lambda _: entity.confirm_product())
         ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
 
+        self.get_submit_subject().pipe(
+            operators.do_action(lambda _: product_select_box.config(state = DISABLED)),
+            operators.do_action(lambda _: spin.config(state = DISABLED)),
+            operators.do_action(lambda _: add_button.config(state = DISABLED))
+        ).subscribe()
+
     def render_payment_area(self, entity: OrderCreateEntity) -> None:
         payment_frame = BaseFrame(self)
         payment_frame.set_frame_style(TOP, X, False)
     
     def render_option_area(self, entity: OrderCreateEntity) -> None:
         option_frame = BaseFrame(self)
-        option_frame.set_frame_style(TOP, X, True)
+        option_frame.set_frame_style(TOP, BOTH, True)
         option_frame.display_frame()
 
         class OperateButton(OptionButton):
@@ -248,6 +261,16 @@ class CreateOrderFrame(BaseFrame):
     
         submit_button = OperateButton(option_frame, "Submit", Subject())
         pay_button = OperateButton(option_frame, "Pay", Subject())
+        pay_button.config(state = DISABLED)
+
+        submit_button.get_button_subject().pipe(
+            operators.filter(lambda _: entity.is_reay_for_submit()),
+            operators.flat_map(lambda _: handler.create_new_order(entity)),
+            operators.filter(lambda res: res == "success"),
+            operators.do_action(lambda _: submit_button.config(state = DISABLED)),
+            operators.do_action(lambda _: pay_button.config(state = NORMAL))
+        ).subscribe(self.get_submit_subject())
+
 
 
 class ReactiveCreateNewOrderButton(AbstractMenuButton):

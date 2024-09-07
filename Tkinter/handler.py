@@ -31,6 +31,12 @@ def page_customers(pattern: CustomerListFilterEntity, page_num: int, page_size: 
         ))
     )
 
+def customer_detail(customer_id: int) -> Observable[CustomerViewEntity]:
+    return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+        operators.filter(lambda item: item.get_customer_id() == customer_id),
+        operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance()))
+    )
+
 def add_customer(entity: CustomerAddEntity) -> Observable[str]:
     CustomerEntity.append_customer(entity.get_customer_name(), entity.get_customer_balance())
     return reactivex.of("success")
@@ -65,4 +71,7 @@ def add_product(entity: ProductAddEntity) -> Observable[str]:
 
 def edit_product(entity: ProductViewEntity) -> Observable[str]:
     ProductEntity.edit_product(entity.get_product_id(), entity.get_product_name(), entity.get_product_price())
+    return reactivex.of("success")
+
+def create_new_order(entity: OrderCreateEntity) -> Observable[str]:
     return reactivex.of("success")
