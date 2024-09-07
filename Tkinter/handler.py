@@ -107,12 +107,9 @@ def page_orders(pattern: CustomerListFilterEntity, page_num: int, page_size: int
         operators.reduce(lambda count, item: count + len(item.get_customer_order()), 0),
         operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
             operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
-            
             operators.flat_map(lambda item: reactivex.from_iterable(item.get_customer_order()).pipe(
                 operators.map(lambda order: OrderViewEntity(item.get_customer_id(), item.get_customer_name(), order.get_order_id(), order.get_order_date(), list(map(lambda o: OrderCreateEntity.OrderProductEntity(o.get_product_id(), o.get_product_name(), o.get_product_price(), o.get_product_num(), o.get_product_sub_total()) ,order.get_order_items())), order.get_order_total()))
             )),
-            
-            
             operators.skip(page_size * page_num),
             operators.take(page_size),
             operators.to_iterable(),
