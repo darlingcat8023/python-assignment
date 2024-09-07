@@ -343,3 +343,28 @@ class PaymentCreateEntity:
             if handler is not None : handler(self.get_payment_amount())
             return False
         return True
+    
+class PaymentViewEneity:
+
+    __customer_id: int
+    __customer_name: str
+    __payment_amount: Decimal
+    __payment_date: str
+
+    def __init__(self, id: int, name: str, amount: Decimal, date: str) -> None:
+        self.__customer_id = id
+        self.__customer_name = name
+        self.__payment_amount = amount
+        self.__payment_date = date
+
+    def get_customer_id(self) -> int:
+        return self.__customer_id
+    
+    def get_customer_name(self) -> str:
+        return self.__customer_name
+    
+    def get_payment_amount(self) -> Decimal:
+        return self.__payment_amount
+    
+    def get_payment_date(self) -> str:
+        return self.__payment_date

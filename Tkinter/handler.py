@@ -3,7 +3,7 @@ from page import Page
 from typing import List
 from reactivex import operators, Observable
 import reactivex
-from Tkinter.abstract_model import *
+from abstract_model import *
 from view_model import *
 
 CustomerEntity.init_data_set()
@@ -83,4 +83,20 @@ def create_new_payment(entity: PaymentCreateEntity) -> Observable[str]:
         operators.filter(lambda customer: customer.get_customer_id() == entity.get_customer_id()),
         operators.do_action(lambda customer: customer.add_payment(entity.get_payment_amount())),
         operators.map(lambda _: "success")
+    )
+
+def page_payments(pattern: CustomerListFilterEntity, page_num: int, page_size: int) -> Observable[Page[PaymentViewEneity]]:
+    return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+        operators.reduce(lambda count, item: count + len(item.get_payment_list()), 0),
+        operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+            operators.flat_map(lambda item: reactivex.from_iterable(item.get_payment_list()).pipe(
+                operators.map(lambda pay: PaymentViewEneity(item.get_customer_id(), item.get_customer_name(), pay.get_payment_amount(), pay.get_payment_date()))
+            )),
+            operators.skip(page_size * page_num),
+            operators.take(page_size),
+            operators.to_iterable(),
+            operators.map(lambda set: Page(count, set))
+        ))
     )

@@ -40,6 +40,7 @@ class GUI(Frame):
         ReactiveMainButton(menu_frame, "Main", frame_holder, Subject())
         ReactiveListCustomerButton(menu_frame, "List All Customers", frame_holder, Subject())
         ReactiveListProductButton(menu_frame, "List All Products", frame_holder, Subject())
+        ReactiveListPaymentsButton(menu_frame, "List All Payments", frame_holder, Subject())
         ReactiveCreateNewOrderButton(menu_frame, "Create New Order", frame_holder, Subject())
         
 
@@ -137,6 +138,39 @@ class ReactiveListProductButton(AbstractMenuButton):
         table.get_selected_subject().pipe(
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
+
+
+class ReactiveListPaymentsButton(AbstractMenuButton):
+
+    def __init__(self, menu_frame: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject) -> None:
+        super().__init__(menu_frame, name, frame_holder, subject)
+
+    def display_button(self) -> None:
+        self.pack(side = TOP, fill = X, padx = 10, pady = 10)
+
+    def render_compnent(self, frame: BaseFrame) -> None:
+        
+        entity = CustomerListFilterEntity()
+        customer_search= SearchBar(frame, "Customer Name:")
+
+        class Table(PageableTreeTable[PaymentViewEneity]):
+
+            def data_provider(self, page: int, page_size: int) -> Observable[Page[PaymentViewEneity]]:
+                return handler.page_payments(entity, page, page_size)
+            
+            def column_provider(self, data: PaymentViewEneity) -> None:
+                self.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_payment_amount(), data.get_payment_date()))
+
+            def instance_provider(self, tuple: Tuple[str]) -> CustomerViewEntity:
+                return None
+        
+        table = Table(frame, ['Customer Id', 'Customer Name', 'Payment Amount', 'Payment Date'])
+
+        self.get_button_subject().subscribe(table.get_load_subject())
+
+        customer_search.get_input_subject().pipe(
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+        ).subscribe(table.get_load_subject())
 
 
 class CreateOrderFrame(BaseFrame):
