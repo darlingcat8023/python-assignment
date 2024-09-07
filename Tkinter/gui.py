@@ -1,5 +1,5 @@
 from tkinter import *
-from tkinter import Frame, Label
+from tkinter import Frame, Label, messagebox
 from typing import TypeVar, Callable, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
@@ -371,13 +371,15 @@ class CreateOrderFrame(BaseFrame):
             operators.flat_map(lambda _: handler.create_new_order(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: submit_button.config(state = DISABLED)),
-            operators.do_action(lambda _: pay_button.config(state = NORMAL))
+            operators.do_action(lambda _: pay_button.config(state = NORMAL)),
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Order Submitted Successfully!"))
         ).subscribe(self.get_submit_subject())
 
         pay_button.get_button_subject().pipe(
             operators.filter(lambda _: payment_entity.is_ready_for_submit()),
             operators.flat_map(lambda _: handler.create_new_payment(payment_entity)),
             operators.filter(lambda res: res == "success")
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Payment Successful!"))
         ).subscribe(self.get_submit_subject())
 
 class ReactiveCreateNewOrderButton(AbstractMenuButton):
@@ -429,7 +431,9 @@ class AddCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_customer(entity))
+            operators.flat_map(lambda entity: handler.add_customer(entity)),
+            operators.filter(lambda res: res == "success"),
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Customer Added Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -488,7 +492,9 @@ class EditCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_customer(entity))
+            operators.flat_map(lambda entity: handler.edit_customer(entity)),
+            operators.filter(lambda res: res == "success"),
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Customer Editted Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -552,7 +558,9 @@ class AddProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_product(entity))
+            operators.flat_map(lambda entity: handler.add_product(entity)),
+            operators.filter(lambda res: res == "success"),
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Product Added Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
@@ -610,7 +618,9 @@ class EditProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_product(entity))
+            operators.flat_map(lambda entity: handler.edit_product(entity)),
+            operators.filter(lambda res: res == "success"),
+            operators.do_action(lambda _: messagebox.showinfo("Information", "Product Editted Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
         
         cancel_button.get_button_subject().pipe(
