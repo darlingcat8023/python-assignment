@@ -6,13 +6,10 @@ T = TypeVar("T")
 
 class FieldWrapper(Generic[T]):
 
-    __field: T
-    __error_handler: Callable[[T], None]
-
     def __init__(self, field: T, error_handler: Callable[[T], None]) -> None:
         super().__init__()
-        self.__field = field
-        self.__error_handler = error_handler
+        self.__field: T = field
+        self.__error_handler: Callable[[T], None] = error_handler
 
     def get_value(self) -> T:
         return self.__field
@@ -26,20 +23,19 @@ class FieldWrapper(Generic[T]):
     def set_error_handler(self, handler: Callable[[T], None]) -> None:
         self.__error_handler = handler
 
+
 class SelectableEntity(ABC):
 
     @abstractmethod
     def get_selection_key(self) -> str:
         pass
 
+
 class CustomerAddEntity:
 
-    __customer_name: FieldWrapper[str]
-    __customer_balance: FieldWrapper[Decimal]
-
     def __init__(self, name_wrapper: FieldWrapper[str], balance_wrapper: FieldWrapper[Decimal]) -> None:
-        self.__customer_name = name_wrapper
-        self.__customer_balance = balance_wrapper
+        self.__customer_name: FieldWrapper[str] = name_wrapper
+        self.__customer_balance: FieldWrapper[Decimal] = balance_wrapper
     
     def set_customer_name(self, customer_name: str) -> None:
         self.__customer_name.set_value(customer_name)
@@ -74,11 +70,9 @@ class CustomerAddEntity:
 
 class CustomerEditEntity(CustomerAddEntity):
 
-    __customer_id: FieldWrapper[int]
-
     def __init__(self, id_wrapper: FieldWrapper[int], name_wrapper: FieldWrapper[str], balance_wrapper: FieldWrapper[Decimal]) -> None:
         super().__init__(name_wrapper, balance_wrapper)
-        self.__customer_id = id_wrapper
+        self.__customer_id: FieldWrapper[int] = id_wrapper
 
     def get_customer_id(self) -> int:
         return self.__customer_id.get_value()
@@ -98,10 +92,8 @@ class CustomerViewEntity(CustomerEditEntity, SelectableEntity):
 
 class CustomerListFilterEntity:
 
-    __customer_name: str
-
     def __init__(self) -> None:
-        self.__customer_name = None
+        self.__customer_name: str = None
 
     def set_customer_name(self, name: str) -> None:
         self.__customer_name = name
@@ -112,12 +104,9 @@ class CustomerListFilterEntity:
 
 class ProductAddEntity:
 
-    __product_name: FieldWrapper[str]
-    __product_price: FieldWrapper[Decimal]
-
     def __init__(self, name_wrapper: FieldWrapper[str], price_wrapper: FieldWrapper[Decimal]) -> None:
-        self.__product_name = name_wrapper
-        self.__product_price = price_wrapper
+        self.__product_name: FieldWrapper[str] = name_wrapper
+        self.__product_price: FieldWrapper[Decimal] = price_wrapper
 
     def set_product_name(self, product_name: str) -> None:
         self.__product_name.set_value(product_name)
@@ -152,11 +141,9 @@ class ProductAddEntity:
 
 class ProductEditEntity(ProductAddEntity):
 
-    __product_id: FieldWrapper[int]
-
     def __init__(self, id_wrapper: FieldWrapper[int], name_wrapper: FieldWrapper[str], price_wrapper: FieldWrapper[Decimal]) -> None:
         super().__init__(name_wrapper, price_wrapper)
-        self.__product_id = id_wrapper
+        self.__product_id: FieldWrapper[int] = id_wrapper
 
     def get_product_id(self) -> int:
         return self.__product_id.get_value()
@@ -173,10 +160,8 @@ class ProductViewEntity(ProductEditEntity, SelectableEntity):
 
 class ProductListFilterEntity:
 
-    __product_name: str
-
     def __init__(self) -> None:
-        self.__product_name = None
+        self.__product_name: str = None
 
     def set_product_name(self, name: str) -> None:
         self.__product_name = name
@@ -189,14 +174,10 @@ class OrderCreateEntity:
 
     class OrderCustomerEntity:
 
-        __customer_id: int
-        __customer_name: str
-        __customer_balance: Decimal
-
         def __init__(self, id: int, name: str, balance: Decimal) -> None:
-            self.__customer_id = id
-            self.__customer_name = name
-            self.__customer_balance = balance
+            self.__customer_id: int = id
+            self.__customer_name: str = name
+            self.__customer_balance: Decimal = balance
 
         def get_customer_id(self) -> int:
             return self.__customer_id
@@ -209,18 +190,12 @@ class OrderCreateEntity:
         
     class OrderProductEntity:
 
-        __product_id: int
-        __product_name: str
-        __product_price: Decimal
-        __product_num: int
-        __product_sub_total: Decimal
-
         def __init__(self, id: int, name: str, price: Decimal, num: int = 0, sub_total: Decimal = Decimal(0.00)) -> None:
-            self.__product_id = id
-            self.__product_name = name
-            self.__product_price = price
-            self.__product_num = num
-            self.__product_sub_total = sub_total
+            self.__product_id: int = id
+            self.__product_name: str = name
+            self.__product_price: Decimal = price
+            self.__product_num: int = num
+            self.__product_sub_total: Decimal = sub_total
 
         def get_product_id(self) -> int:
             return self.__product_id
@@ -263,17 +238,12 @@ class OrderCreateEntity:
  
         def text_print_on_text_box(self) -> None:
             return f"Product Id:\t{self.get_product_id()}\tProduct Name:\t{self.get_product_name()}\nProduct Num:\t{self.get_product_num()}\tProduct Price:\t{self.get_product_price()}\nSub Total:\t{self.get_product_sub_total()}"
-
-    __customer: OrderCustomerEntity
-    __temp_entity: OrderProductEntity
-    __items: List[OrderProductEntity]
-    __order_price: Decimal
     
     def __init__(self) -> None:
-        self.__customer = None
-        self.__temp_entity = OrderCreateEntity.OrderProductEntity(None, None, None)
-        self.__items = []
-        self.__order_price = Decimal(0.00)
+        self.__customer: OrderCreateEntity.OrderCustomerEntity = None
+        self.__temp_entity: OrderCreateEntity.OrderProductEntity = OrderCreateEntity.OrderProductEntity(None, None, None)
+        self.__items: List[OrderCreateEntity.OrderProductEntity] = []
+        self.__order_price: Decimal = Decimal(0.00)
 
     def get_customer(self) -> OrderCustomerEntity:
         return self.__customer
@@ -322,12 +292,9 @@ class OrderCreateEntity:
     
 class PaymentCreateEntity:
 
-    __customer_id: FieldWrapper[int]
-    __payment_amount: FieldWrapper[Decimal]
-
     def __init__(self) -> None:
-        self.__customer_id = FieldWrapper[int](None, None)
-        self.__payment_amount = FieldWrapper[Decimal](Decimal(0.00), None)
+        self.__customer_id: FieldWrapper[int] = FieldWrapper[int](None, None)
+        self.__payment_amount: FieldWrapper[Decimal] = FieldWrapper[Decimal](Decimal(0.00), None)
 
     def get_customer_id(self) -> int:
         return self.__customer_id.get_value()
@@ -353,16 +320,11 @@ class PaymentCreateEntity:
     
 class PaymentViewEneity:
 
-    __customer_id: int
-    __customer_name: str
-    __payment_amount: Decimal
-    __payment_date: str
-
     def __init__(self, id: int, name: str, amount: Decimal, date: str) -> None:
-        self.__customer_id = id
-        self.__customer_name = name
-        self.__payment_amount = amount
-        self.__payment_date = date
+        self.__customer_id: int = id
+        self.__customer_name: str = name
+        self.__payment_amount: Decimal = amount
+        self.__payment_date: str = date
 
     def get_customer_id(self) -> int:
         return self.__customer_id
@@ -379,20 +341,13 @@ class PaymentViewEneity:
 
 class OrderViewEntity:
 
-    __customer_id: int
-    __customer_name: str
-    __order_id: int
-    __order_date: str
-    __order_items: List[OrderCreateEntity.OrderProductEntity]
-    __order_total: Decimal
-
     def __init__(self, customer_id: int, customer_name: str, order_id: int, order_date: str, order_items: List[OrderCreateEntity.OrderProductEntity], order_total: Decimal) -> None:
-        self.__customer_id = customer_id
-        self.__customer_name = customer_name
-        self.__order_id = order_id
-        self.__order_date = order_date
-        self.__order_items = order_items
-        self.__order_total = order_total
+        self.__customer_id: int = customer_id
+        self.__customer_name: str = customer_name
+        self.__order_id: int = order_id
+        self.__order_date: str = order_date
+        self.__order_items: List[OrderCreateEntity.OrderProductEntity] = order_items
+        self.__order_total: Decimal = order_total
 
     def get_customer_id(self) -> int:
         return self.__customer_id

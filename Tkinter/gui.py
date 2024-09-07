@@ -215,11 +215,9 @@ class ReactiveListPaymentsButton(AbstractMenuButton):
 
 class CreateOrderFrame(BaseFrame):
 
-    __submit_subject: Subject
-
     def __init__(self, frame_holder: FrameHolder) -> None:
         super().__init__(frame_holder.get_base_frame())
-        self.__submit_subject = Subject()
+        self.__submit_subject: Subject = Subject()
         self.draw_compnent(frame_holder)
 
     def get_submit_subject(self) -> Subject:
@@ -443,11 +441,9 @@ class AddCustomerFrame(BaseFrame):
 
 class ReactiveAddCustomerButton(AbstractMenuButton):
 
-    __callback_subject: Subject
-
     def __init__(self, frame: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(frame, name, frame_holder, subject)
-        self.__callback_subject = callback
+        self.__callback_subject: Subject = callback
 
     def display_button(self) -> None:
         self.pack(side = RIGHT, padx = 10, pady = 10)
@@ -504,12 +500,10 @@ class EditCustomerFrame(BaseFrame):
 
 class ReactiveEditCustomerButton(AbstractMenuButton):
 
-    __callback_subject: Subject
-    __customer_view: CustomerViewEntity
-
     def __init__(self, parent: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(parent, name, frame_holder, subject)
-        self.__callback_subject = callback
+        self.__callback_subject: Subject = callback
+        self.__customer_view: CustomerViewEntity = None
 
     def display_button(self) -> None:
         self.pack(side = RIGHT, padx = 10, pady = 10)
@@ -570,11 +564,9 @@ class AddProductFrame(BaseFrame):
 
 class ReactiveAddProductButton(AbstractMenuButton):
 
-    __callback_subject: Subject
-
     def __init__(self, frame: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(frame, name, frame_holder, subject)
-        self.__callback_subject = callback
+        self.__callback_subject: Subject = callback
 
     def display_button(self) -> None:
         self.pack(side = RIGHT, padx = 10, pady = 10)
@@ -630,12 +622,10 @@ class EditProductFrame(BaseFrame):
 
 class ReactiveEditProductButton(AbstractMenuButton):
 
-    __callback_subject: Subject
-    __product_view: ProductViewEntity
-
     def __init__(self, parent: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject, callback: Subject) -> None:
         super().__init__(parent, name, frame_holder, subject)
-        self.__callback_subject = callback
+        self.__callback_subject: Subject = callback
+        self.__product_view: ProductViewEntity = None
 
     def display_button(self) -> None:
         self.pack(side = RIGHT, padx = 10, pady = 10)
