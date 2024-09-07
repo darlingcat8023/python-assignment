@@ -17,10 +17,10 @@ def all_customers() -> Observable[List[CustomerViewEntity]]:
 
 def page_customers(pattern: CustomerListFilterEntity, page_num: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
         operators.count(),
         operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
             operators.skip(page_size * page_num),
             operators.take(page_size),
             operators.map(lambda item: CustomerViewEntity(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
@@ -51,10 +51,10 @@ def all_products() -> Observable[List[ProductViewEntity]]:
 
 def page_products(pattern: ProductListFilterEntity, page_num: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
     return reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
-        operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
+        operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name().lower()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
         operators.count(),
         operators.flat_map(lambda count: reactivex.from_iterable(ProductEntity.get_product_list()).pipe(
-            operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
+            operators.filter(lambda item: item.get_product_name().lower().startswith(pattern.get_product_name().lower()) if pattern.get_product_name() is not None and len(pattern.get_product_name()) > 0 else True),
             operators.skip(page_size * page_num),
             operators.take(page_size),
             operators.map(lambda item: ProductViewEntity(item.get_product_id(), item.get_product_name(), item.get_product_price())),
@@ -87,10 +87,10 @@ def create_new_payment(entity: PaymentCreateEntity) -> Observable[str]:
 
 def page_payments(pattern: CustomerListFilterEntity, page_num: int, page_size: int) -> Observable[Page[PaymentViewEneity]]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
         operators.reduce(lambda count, item: count + len(item.get_payment_list()), 0),
         operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
             operators.flat_map(lambda item: reactivex.from_iterable(item.get_payment_list()).pipe(
                 operators.map(lambda pay: PaymentViewEneity(item.get_customer_id(), item.get_customer_name(), pay.get_payment_amount(), pay.get_payment_date()))
             )),
@@ -103,10 +103,10 @@ def page_payments(pattern: CustomerListFilterEntity, page_num: int, page_size: i
 
 def page_orders(pattern: CustomerListFilterEntity, page_num: int, page_size: int) -> Observable[Page[OrderViewEntity]]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+        operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
         operators.reduce(lambda count, item: count + len(item.get_customer_order()), 0),
         operators.flat_map(lambda count: reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
+            operators.filter(lambda item: item.get_customer_name().lower().startswith(pattern.get_customer_name().lower()) if pattern.get_customer_name() is not None and len(pattern.get_customer_name()) > 0 else True),
             operators.flat_map(lambda item: reactivex.from_iterable(item.get_customer_order()).pipe(
                 operators.map(lambda order: OrderViewEntity(item.get_customer_id(), item.get_customer_name(), order.get_order_id(), order.get_order_date(), list(map(lambda o: OrderCreateEntity.OrderProductEntity(o.get_product_id(), o.get_product_name(), o.get_product_price(), o.get_product_num(), o.get_product_sub_total()) ,order.get_order_items())), order.get_order_total()))
             )),
