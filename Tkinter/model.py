@@ -195,7 +195,6 @@ class CustomerEntity(Customer):
     def add_customer_order(self, order_total: Decimal, order_items: List[OrderItem]) -> None:
         self.get_customer_order().append(OrderEntity(order_total, order_items))
         self.set_customer_balance(self.get_customer_balance() + order_total)
-        
 
     def add_payment(self, amount: Decimal) -> None:
         self.set_customer_balance(self.get_customer_balance() - amount)
