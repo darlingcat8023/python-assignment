@@ -298,7 +298,7 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[ENT]):
         
         input_subject.pipe(
             operators.filter(lambda ipt: ipt is not None and len(ipt) > 0),
-            operators.map(lambda ipt: [item for item in list(self.__data_dict.keys()) if item.lower().startswith(ipt)]),
+            operators.map(lambda ipt: [item for item in list(self.__data_dict.keys()) if item.lower().startswith(ipt.lower())]),
             operators.filter(lambda list: list is not None and len(list) > 0),
             operators.do_action(lambda values: self.config(values = values)),
             operators.do_action(lambda _: self.event_generate('<Down>')),
