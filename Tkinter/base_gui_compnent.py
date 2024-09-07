@@ -6,6 +6,7 @@ from reactivex.subject import *
 import abc, page, math, reactivex
 from decimal import Decimal
 from view_model import *
+from tkinter.font import Font
 
 ## TypeVar used in some comenents for the type restriction
 T = TypeVar("T")
@@ -154,12 +155,18 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
     def __set_max_page_num(self, max_page_num: int) -> None:
         self.__max_page_num = max_page_num
 
-    def __init__(self, parent_frame: BaseFrame, columns: List[str],  page_size: int = 35) -> None:
+    def __init__(self, parent_frame: BaseFrame, columns: List[str], page_size: int = 35) -> None:
         
         super().__init__(parent_frame, show = "headings")
+        
         self.__page_size: int = page_size
         self. __current_page: int = 1
         self.__max_page_num: int = 1
+
+        self["columns"] = columns
+        for col in columns:
+            self.heading(col, text = col)
+        
         pagination_frame = BaseFrame(parent_frame)
 
         load_subject = Subject()
@@ -189,12 +196,13 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
         ).subscribe()
 
         pagination_frame.pack(side = TOP, fill = X)
-        selected_subject = Subject()
-        self.__selected_subject: Subject = selected_subject
-        self["columns"] = columns
-        for col in columns:
-            self.heading(col, text = col)
+        
+        self.__selected_subject: Subject = Subject()
+        
+        self.tooltip_window = None
         self.bind("<<TreeviewSelect>>", self.__on_selection)
+        self.bind("<Motion>", self.__on_motion)
+        self.bind("<Leave>", self.__on_leave)
         self.set_style()
 
     def set_style(self) -> None:
@@ -222,16 +230,46 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
     def instance_provider(self, tuple: Tuple[str]) -> T:
         pass
 
+    def on_motion_show(self, tuple: Tuple[str]) -> str:
+        return None
+
     def __on_selection(self, event: Event) -> None:
         selected_items = self.selection()
         if selected_items:
             self.__selected_subject.on_next(self.instance_provider(self.item(selected_items[0], 'values')))
+
+    def __on_motion(self, event):
+        row_id = self.identify_row(event.y)
+        if row_id is None:
+            self.__hide_tooltip()
+            return
+        data = self.on_motion_show(self.instance_provider(self.item(row_id, "values")))
+        if data is None or len(data) < 1:
+            return
+        if not self.tooltip_window:
+            self.tooltip_window = Toplevel(self)
+            self.tooltip_window.wm_overrideredirect(True)
+            self.tooltip_label = Label(self.tooltip_window, fg = "black", background = "white", borderwidth = 1, relief = SOLID)
+            self.tooltip_label.pack()
+        self.tooltip_label.config(text = data)
+        self.tooltip_window.wm_geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
+
+    def __hide_tooltip(self):
+        if self.tooltip_window:
+            self.tooltip_window.destroy()
+            self.tooltip_window = None
+
+    def __on_leave(self, event):
+        self.__hide_tooltip()
     
     def get_load_subject(self) -> Subject:
         return self.__load_subject
     
     def get_selected_subject(self) -> Subject:
         return self.__selected_subject
+    
+    def get_motion_subject(self) -> Subject:
+        return self.__motion_subject
 
     def clear(self) -> None:
         for item in self.get_children():
@@ -297,8 +335,7 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[ENT]):
         self.config(textvariable = entry_var)
         
         input_subject.pipe(
-            operators.filter(lambda ipt: ipt is not None and len(ipt) > 0),
-            operators.map(lambda ipt: [item for item in list(self.__data_dict.keys()) if item.lower().startswith(ipt.lower())]),
+            operators.map(lambda ipt: [item for item in self.__data_dict.keys()if ipt is None or len(ipt) == 0 or item.lower().startswith(ipt.lower())]),
             operators.filter(lambda list: list is not None and len(list) > 0),
             operators.do_action(lambda values: self.config(values = values)),
             operators.do_action(lambda _: self.event_generate('<Down>')),

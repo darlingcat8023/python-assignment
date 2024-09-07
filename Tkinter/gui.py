@@ -96,6 +96,7 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
         
         table.get_selected_subject().pipe(
+            operators.filter(lambda item: item is not None),
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
 
@@ -123,7 +124,7 @@ class ReactiveListProductButton(AbstractMenuButton):
             
             def instance_provider(self, tuple: Tuple[str]) -> ProductViewEntity:
                 return ProductViewEntity(int(tuple[0]), tuple[1], Decimal(tuple[2]))
-        
+            
         table = Table(frame, ['Product Id', 'Product Name', 'Product Price'])
         ReactiveAddProductButton(frame, "Add Product", self.get_frame_holder(), Subject(), table.get_load_subject())
         edit_button = ReactiveEditProductButton(frame, "Edit Product", self.get_frame_holder(), Subject(), table.get_load_subject())
@@ -136,7 +137,9 @@ class ReactiveListProductButton(AbstractMenuButton):
         ).subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
+        
         table.get_selected_subject().pipe(
+            operators.filter(lambda item: item is not None),
             operators.do_action(lambda item: edit_button.set_data_to_edit(item))
         ).subscribe(lambda _: edit_button.display_button())
 
@@ -165,13 +168,17 @@ class ReactiveListOrdersButton(AbstractMenuButton):
                     data.get_customer_name(), 
                     data.get_order_id(), 
                     data.get_order_date(),
-                    data.get_order_total()
+                    data.get_order_total(),
+                    data.get_formated_items()
                 ))
 
             def instance_provider(self, tuple: Tuple[str]) -> OrderViewEntity:
-                return None
+                return tuple
+            
+            def on_motion_show(self, tuple: Tuple[str]) -> str:
+                return tuple[5]
         
-        table = Table(frame, ['Customer Id', 'Customer Name', 'Order Id', 'Order Date', 'Order Total'])
+        table = Table(frame, ['Customer Id', 'Customer Name', 'Order Id', 'Order Date', 'Order Total', 'Order Item'], 20)
 
         self.get_button_subject().subscribe(table.get_load_subject())
 
@@ -317,7 +324,7 @@ class CreateOrderFrame(BaseFrame):
         add_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.do_action(lambda _: entity.confirm_product())
-        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box_with_total()))
+        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
 
         self.get_submit_subject().pipe(
             operators.do_action(lambda _: product_select_box.config(state = DISABLED)),

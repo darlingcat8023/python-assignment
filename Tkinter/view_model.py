@@ -238,6 +238,9 @@ class OrderCreateEntity:
  
         def text_print_on_text_box(self) -> None:
             return f"Product Id:\t{self.get_product_id()}\tProduct Name:\t{self.get_product_name()}\nProduct Num:\t{self.get_product_num()}\tProduct Price:\t{self.get_product_price()}\nSub Total:\t{self.get_product_sub_total()}"
+        
+        def text_print_on_cell(self) -> None:
+            return f"Product Name: {self.get_product_name()}, Product Num: {self.get_product_num()}, Product Price: {self.get_product_price()},S ub Total: {self.get_product_sub_total()}"
     
     def __init__(self) -> None:
         self.__customer: OrderCreateEntity.OrderCustomerEntity = None
@@ -278,10 +281,7 @@ class OrderCreateEntity:
         return self.__order_price
     
     def text_print_on_product_box(self) -> None:
-        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items())))
-    
-    def text_print_on_product_box_with_total(self) -> None:
-        return self.text_print_on_product_box() + f"\n\nOrder Total:\t{self.get_order_price()}"
+        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.get_order_items()))) + f"\n\nOrder Total:\t{self.get_order_price()}"
     
     def is_reay_for_submit(self) -> None:
         if self.get_customer() is None:
@@ -362,7 +362,7 @@ class OrderViewEntity:
         return self.__order_date
     
     def get_formated_items(self) -> str:
-        return "\n\n".join(list(map(lambda item: item.text_print_on_text_box(), self.__order_items)))
+        return "\n".join(list(map(lambda item: item.text_print_on_cell(), self.__order_items)))
 
     def get_order_total(self) -> Decimal:
         return self.__order_total
