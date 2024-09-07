@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List
 from abstract_entity import *
-import datetime
+from datetime import datetime
 
 date_formate = "%d/%m/%Y %H:%M:%S" 
 

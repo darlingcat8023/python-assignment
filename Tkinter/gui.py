@@ -182,7 +182,7 @@ class CreateOrderFrame(BaseFrame):
         
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
-            operators.do_action(lambda item: payment_entity.set_sustomer_id(item.get_customer_id())),
+            operators.do_action(lambda item: payment_entity.set_customer_id(item.get_customer_id())),
             operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id()))
         ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
 
@@ -297,7 +297,7 @@ class CreateOrderFrame(BaseFrame):
 
         pay_button.get_button_subject().pipe(
             operators.filter(lambda _: payment_entity.is_ready_for_submit()),
-            operators.do_action(lambda _: handler.create_new_payment(payment_entity)),
+            operators.flat_map(lambda _: handler.create_new_payment(payment_entity)),
             operators.filter(lambda res: res == "success")
         ).subscribe(self.get_submit_subject())
 

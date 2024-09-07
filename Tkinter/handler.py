@@ -82,7 +82,7 @@ def create_new_order(entity: OrderCreateEntity) -> Observable[str]:
 
 def create_new_payment(entity: PaymentCreateEntity) -> Observable[str]:
     return reactivex.from_iterable(CustomerEntity.get_customer_list()).pipe(
-        operators.filter(lambda customer: customer.get_customer_id() == entity.get_customer().get_customer_id()),
+        operators.filter(lambda customer: customer.get_customer_id() == entity.get_customer_id()),
         operators.do_action(lambda customer: customer.add_payment(entity.get_payment_amount())),
         operators.map(lambda _: "success")
     )

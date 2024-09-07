@@ -6,6 +6,7 @@ from reactivex.subject import *
 import abc, handler, page, customer, math, reactivex
 from decimal import Decimal
 from view_model import *
+from datetime import datetime, timedelta  
 
 
 class BaseSpinBox(Spinbox):
@@ -31,22 +32,4 @@ class BaseSpinBox(Spinbox):
 # root.mainloop()
 
 
-class TestA:
-
-    def __init__(self) -> None:
-        print(self.get_a_string())
-
-    def get_a_string(self) -> str:
-        return "111"
-    
-
-def test_method() -> None:
-    
-    class TestB(TestA):
-
-        def get_a_string(self) -> str:
-            return "222"
-        
-    ins = TestB()
-
-test_method()
+print(datetime.strftime(datetime.now(), "%d/%m/%Y %H:%M:%S" ))

@@ -323,7 +323,7 @@ class PaymentCreateEntity:
         self.__customer_id = FieldWrapper[int](None, None)
         self.__payment_amount = FieldWrapper[Decimal](Decimal(0.00), None)
 
-    def get_sustomer_id(self) -> int:
+    def get_customer_id(self) -> int:
         return self.__customer_id.get_value()
 
     def get_payment_amount(self) -> Decimal:
@@ -332,7 +332,7 @@ class PaymentCreateEntity:
     def set_payment_amount_error_hanlder(self, handler: Callable[[Decimal], None]) -> None:
         self.__payment_amount.set_error_handler(handler)
 
-    def set_sustomer_id(self, id: int) -> None:
+    def set_customer_id(self, id: int) -> None:
         self.__customer_id.set_value(id)
 
     def set_payment_amount(self, amount: Decimal) -> None:
@@ -340,7 +340,7 @@ class PaymentCreateEntity:
 
     def is_ready_for_submit(self) -> bool:
         if self.get_payment_amount() <= 0:
-            handler = self.__product_price.get_error_handler()
+            handler = self.__payment_amount.get_error_handler()
             if handler is not None : handler(self.get_payment_amount())
             return False
         return True
