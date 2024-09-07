@@ -3,7 +3,7 @@ from tkinter import Event, Frame, ttk, font
 from typing import TypeVar, List, Callable, Generic, Tuple, Dict
 from reactivex import operators, Observable
 from reactivex.subject import *
-import abc, handler, page, customer, math, reactivex
+import abc, handler, page, math, reactivex
 from decimal import Decimal
 from view_model import *
 from datetime import datetime, timedelta  

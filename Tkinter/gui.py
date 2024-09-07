@@ -1,9 +1,9 @@
 from tkinter import *
-from tkinter import Event, Frame, Label, ttk
-from typing import TypeVar, List, Callable, Generic, Tuple
+from tkinter import Frame, Label
+from typing import TypeVar, Callable, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
-import abc, handler, page, customer, math, reactivex
+import handler
 from decimal import Decimal
 from base_gui_compnent import *
 from view_model import *

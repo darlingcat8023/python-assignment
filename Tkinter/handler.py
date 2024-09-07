@@ -1,7 +1,6 @@
 from model import *
 from page import Page
 from typing import List
-from decimal import Decimal
 from reactivex import operators, Observable
 import reactivex
 from Tkinter.abstract_model import *
