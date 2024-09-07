@@ -14,14 +14,14 @@ T = TypeVar("T")
 ## BaseFrame will also refresh all the refreshable compnents which regisred
 class BaseFrame(Frame):
 
-    __fill: str = ''
-    __side: str = ''
-    __expand: bool = False
-    
     def __init__(self, parent: Frame, width: int = -1) -> None:
         if width == -1:
             width = parent.winfo_width()
         Frame.__init__(self, parent, width = width)
+        self.__fill: str = ''
+        self.__side: str = ''
+        self.__expand: bool = False
+    
 
     def set_frame_style(self, side: str, fill: str, expand: bool = False) -> None:
         self.__side = side
@@ -41,11 +41,9 @@ class BaseFrame(Frame):
 ## FrameHolder is used for holding the base frame and holing the current displayed frame
 class FrameHolder:
 
-    __base_frame: BaseFrame
-    __frame_stack: List[BaseFrame] = []
-
     def __init__(self, frame: BaseFrame) -> None:
         self.__base_frame = frame
+        self.__frame_stack: List[BaseFrame] = []
 
     def get_base_frame(self) -> BaseFrame:
         return self.__base_frame
@@ -73,11 +71,9 @@ class FrameHolder:
 
 class AbstractButton(abc.ABC, Button):
 
-    __click_subject: Subject
-
     def __init__(self, parent: BaseFrame, name: str, subject: Subject) -> None:
         super().__init__(parent, text = name)
-        self.__click_subject = subject
+        self.__click_subject: Subject = subject
         self.bind('<Button-1>', self.on_click_event)
         self.display_button()
 
@@ -97,9 +93,6 @@ class AbstractButton(abc.ABC, Button):
 
 class AbstractMenuButton(AbstractButton):
 
-    __frame_holder: FrameHolder
-    __compnent_frame: BaseFrame
-
     def get_frame_holder(self) -> FrameHolder:
         return self.__frame_holder
     
@@ -108,12 +101,12 @@ class AbstractMenuButton(AbstractButton):
 
     def __init__(self, parent: BaseFrame, name: str, frame_holder: FrameHolder, subject: Subject) -> None:
         super().__init__(parent, name, subject)
-        self.__frame_holder = frame_holder
+        self.__frame_holder: FrameHolder = frame_holder
         parent = frame_holder.get_base_frame()
         compnent_frame = BaseFrame(parent)
         compnent_frame.set_frame_style(RIGHT, BOTH, True)
         self.render_compnent(compnent_frame)
-        self.__compnent_frame = compnent_frame
+        self.__compnent_frame: BaseFrame = compnent_frame
         subject.subscribe(lambda _: self.__click_handler_chain())
 
     def __click_handler_chain(self) -> None:
@@ -138,25 +131,13 @@ class OptionButton(AbstractButton):
 
 class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
-    class PrevButton(AbstractButton):
+    class PageButton(AbstractButton):
 
         def __init__(self, frame: BaseFrame, name: str, subject: Subject) -> None:
             super().__init__(frame, name, subject)
 
         def display_button(self) -> None:
             self.pack(side = LEFT)
-        
-    class NextButton(AbstractButton):
-
-        def __init__(self, frame: BaseFrame, name: str, subject: Subject) -> None:
-            super().__init__(frame, name, subject)
-
-        def display_button(self) -> None:
-            self.pack(side = LEFT)
-
-    __page_size: int
-    __current_page: int     = 1
-    __max_page_num: int     = 1
 
     def get_page_size(self) -> int:
         return self.__page_size;
@@ -173,23 +154,21 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
     def __set_max_page_num(self, max_page_num: int) -> None:
         self.__max_page_num = max_page_num
 
-    __load_subject: Subject
-    __selected_subject: Subject
-
     def __init__(self, parent_frame: BaseFrame, columns: List[str],  page_size: int = 35) -> None:
         
         super().__init__(parent_frame, show = "headings")
-        self.__page_size = page_size
-        
+        self.__page_size: int = page_size
+        self. __current_page: int = 1
+        self.__max_page_num: int = 1
         pagination_frame = BaseFrame(parent_frame)
 
         load_subject = Subject()
-        self.__load_subject = load_subject
+        self.__load_subject: Subject = load_subject
         
-        prev_button = PageableTreeTable.PrevButton(pagination_frame, "prev", Subject())
+        prev_button = PageableTreeTable.PageButton(pagination_frame, "prev", Subject())
         prev_button.get_button_subject().pipe(operators.do_action(lambda e: self.back_page())).subscribe(load_subject)
         
-        next_button = PageableTreeTable.NextButton(pagination_frame, "next", Subject())
+        next_button = PageableTreeTable.PageButton(pagination_frame, "next", Subject())
         next_button.get_button_subject().pipe(operators.do_action(lambda e: self.forward_page())).subscribe(load_subject)
 
         num_label = Label(pagination_frame)
@@ -211,7 +190,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
         pagination_frame.pack(side = TOP, fill = X)
         selected_subject = Subject()
-        self.__selected_subject = selected_subject
+        self.__selected_subject: Subject = selected_subject
         self["columns"] = columns
         for col in columns:
             self.heading(col, text = col)
@@ -260,15 +239,11 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
 
 class LabelEntryPair(BaseFrame):
-
-    __entry: Entry
-    __tip_label: Label
-    __input_subject: Subject
     
     def __init__(self, parent: Frame, label_name: str, /, *, anchor: str = W, default_value: str = "", editable: bool= True, width: int = -1) -> None:
         BaseFrame.__init__(self, parent, width = width)
         input_subject = Subject()
-        self.__input_subject = input_subject
+        self.__input_subject: Subject = input_subject
         self.draw_compnent(label_name, anchor, default_value, editable, input_subject)
         self.display_frame()
 
@@ -284,8 +259,8 @@ class LabelEntryPair(BaseFrame):
         if not editable:
             entry.config(state = "readonly")
         tip_label = Label(self, width = 150)
-        self.__entry = entry
-        self.__tip_label = tip_label
+        self.__entry: Entry = entry
+        self.__tip_label: Label = tip_label
         self.set_style(label, entry, tip_label)
     
     def set_style(self, label: Label, entry: Label, tip: Label) -> None:
@@ -310,14 +285,12 @@ S = TypeVar("S", bound = SelectableEntity)
 
 class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
 
-    __selected_subject: Subject
-    __load_data_subject: Subject
-    __data_dict: Dict[str, S]
-
     def __init__(self, parent_frame: BaseFrame, data_function: Callable[[None], Observable[List[S]]]) -> None:
         super().__init__(parent_frame)
         selected_subject, load_subject = Subject(), Subject()
-        self.__selected_subject, self.__load_data_subject, self.__data_dict = selected_subject, load_subject, {}
+        self.__selected_subject: Subject = selected_subject
+        self.__load_data_subject: Subject = load_subject
+        self.__data_dict: Dict = {}
         entry_var = StringVar()
         input_subject = Subject()
         entry_var.trace_add("write", lambda x, y, z: input_subject.on_next(entry_var.get()))
@@ -327,11 +300,11 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[S]):
             operators.filter(lambda ipt: ipt is not None and len(ipt) > 0),
             operators.map(lambda ipt: [item for item in list(self.__data_dict.keys()) if item.lower().startswith(ipt)]),
             operators.filter(lambda list: list is not None and len(list) > 0),
+            operators.do_action(lambda values: self.config(values = values)),
             operators.do_action(lambda _: self.event_generate('<Down>')),
             operators.do_action(lambda _: self.selection_clear()),
-            operators.do_action(lambda _: self.icursor(END)),
-            operators.do_action(lambda _: self.focus_set()),
-        ).subscribe(lambda values: self.config(values = values))
+            operators.do_action(lambda _: self.icursor(END))
+        ).subscribe(lambda _: self.focus_set())
 
         load_subject.pipe(
             operators.do_action(lambda _ : self.__data_dict.clear()),
@@ -377,11 +350,9 @@ class BaseTextBox(Text):
 
 class BaseSpinBox(Spinbox):
 
-    __selected_subject: Subject
-
     def __init__(self, parent_frame: Frame, from_: int = 0, to: int = 100) -> None:
         super().__init__(parent_frame, from_ = from_, to = to)
-        self.__selected_subject = Subject()
+        self.__selected_subject: Subject = Subject()
         int_var = IntVar()
         int_var.trace_add("write", lambda x, y, z: self.__selected_subject.on_next(int_var.get()))
         self.config(textvariable = int_var)
@@ -395,13 +366,11 @@ class BaseSpinBox(Spinbox):
 
 
 class SearchBar(BaseFrame):
-
-    __input_subject: Subject
     
     def __init__(self, parent: Frame, label_name: str, /, *, width: int = -1) -> None:
         BaseFrame.__init__(self, parent, width = width)
         input_subject = Subject()
-        self.__input_subject = input_subject
+        self.__input_subject: Subject = input_subject
         self.draw_compnent(label_name, input_subject)
         self.display_frame()
 

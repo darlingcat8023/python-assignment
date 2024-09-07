@@ -314,6 +314,10 @@ class OrderCreateEntity:
         return self.text_print_on_product_box() + f"\n\nOrder Total:\t{self.get_order_price()}"
     
     def is_reay_for_submit(self) -> None:
+        if self.get_customer() is None:
+            return False
+        if len(self.get_order_items()) < 1:
+            return False
         return True
     
 class PaymentCreateEntity:
