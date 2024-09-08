@@ -4,9 +4,7 @@ from typing import TypeVar, List, Callable, Generic, Tuple, Dict
 from reactivex import operators, Observable
 from reactivex.subject import *
 import abc, page, math, reactivex
-from decimal import Decimal
 from view_model import *
-from tkinter.font import Font
 
 ## TypeVar used in some comenents for the type restriction
 T = TypeVar("T")
