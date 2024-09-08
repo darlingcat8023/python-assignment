@@ -90,7 +90,8 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
         customer_search.get_input_subject().pipe(
-            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt)),
+            operators.do_action(lambda _: table.set_current_page(1))
         ).subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())      
@@ -133,7 +134,8 @@ class ReactiveListProductButton(AbstractMenuButton):
         self.get_button_subject().subscribe(lambda _: edit_button.hide_button())
 
         product_search.get_input_subject().pipe(
-            operators.do_action(lambda ipt: entity.set_product_name(ipt))
+            operators.do_action(lambda ipt: entity.set_product_name(ipt)),
+            operators.do_action(lambda _: table.set_current_page(1))
         ).subscribe(table.get_load_subject())
         
         table.get_load_subject().subscribe(lambda _: edit_button.hide_button())
@@ -183,7 +185,8 @@ class ReactiveListOrdersButton(AbstractMenuButton):
         self.get_button_subject().subscribe(table.get_load_subject())
 
         customer_search.get_input_subject().pipe(
-            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt)),
+            operators.do_action(lambda _: table.set_current_page(1))
         ).subscribe(table.get_load_subject())
 
 
@@ -216,7 +219,8 @@ class ReactiveListPaymentsButton(AbstractMenuButton):
         self.get_button_subject().subscribe(table.get_load_subject())
 
         customer_search.get_input_subject().pipe(
-            operators.do_action(lambda ipt: entity.set_customer_name(ipt))
+            operators.do_action(lambda ipt: entity.set_customer_name(ipt)),
+            operators.do_action(lambda _: table.set_current_page(1))
         ).subscribe(table.get_load_subject())
 
 
