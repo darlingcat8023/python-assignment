@@ -224,6 +224,7 @@ class CreateOrderFrame(BaseFrame):
 
     def __init__(self, frame_holder: FrameHolder) -> None:
         super().__init__(frame_holder.get_base_frame())
+        self.__enable_submit_subject = Subject()
         self.__submit_subject: Subject = Subject()
         self.draw_compnent(frame_holder)
 
@@ -262,8 +263,10 @@ class CreateOrderFrame(BaseFrame):
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
             operators.do_action(lambda item: payment_entity.set_customer_id(item.get_customer_id())),
-            operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id()))
-        ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
+            operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id())),
+            operators.do_action(lambda item: customer_text_box.replace_text(item.text_print_on_text_box())),
+            operators.filter(lambda _: entity.is_reay_for_submit())
+        ).subscribe(self.__enable_submit_subject)
 
         self.get_submit_subject().pipe(
             operators.do_action(lambda _: customer_select_box.config(state = DISABLED)),
@@ -294,7 +297,7 @@ class CreateOrderFrame(BaseFrame):
         product_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
         product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame_1, lambda: handler.all_products())
         product_select_box.get_load_subject().on_next(None)
-        product_num_label = Label(product_select_frame_1, text = "Please select quntity :")
+        product_num_label = Label(product_select_frame_1, text = "Please select quantity :")
         product_num_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
         spin = BaseSpinBox(product_select_frame_1)
         spin.config(state = DISABLED)
@@ -323,8 +326,10 @@ class CreateOrderFrame(BaseFrame):
 
         add_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
-            operators.do_action(lambda _: entity.confirm_product())
-        ).subscribe(lambda entity: product_text_box.replace_text(entity.text_print_on_product_box()))
+            operators.do_action(lambda _: entity.confirm_product()),
+            operators.do_action(lambda _: product_text_box.replace_text(entity.text_print_on_product_box())),
+            operators.filter(lambda _: entity.is_reay_for_submit())
+        ).subscribe(self.__enable_submit_subject)
 
         self.get_submit_subject().pipe(
             operators.do_action(lambda _: product_select_box.config(state = DISABLED)),
@@ -368,8 +373,11 @@ class CreateOrderFrame(BaseFrame):
                 self.pack(side = RIGHT, padx = 10, pady = 10, anchor = SE)
     
         submit_button = OperateButton(option_frame, "Submit", Subject())
+        submit_button.config(state = DISABLED)
         pay_button = OperateButton(option_frame, "Pay", Subject())
         pay_button.config(state = DISABLED)
+
+        self.__enable_submit_subject.subscribe(lambda _: submit_button.config(state = NORMAL))
 
         submit_button.get_button_subject().pipe(
             operators.filter(lambda _: entity.is_reay_for_submit()),
