@@ -226,7 +226,7 @@ class CreateOrderFrame(BaseFrame):
 
     def __init__(self, frame_holder: FrameHolder, /, *, side: str, fill: str, expand: bool) -> None:
         super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand)
-        self.__enable_submit_subject = Subject()
+        self.__enable_submit_subject: Subject = Subject()
         self.__submit_subject: Subject = Subject()
         self.draw_compnent(frame_holder)
 

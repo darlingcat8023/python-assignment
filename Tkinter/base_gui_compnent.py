@@ -196,14 +196,11 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
             operators.do_action(lambda _: self.clear()),
             operators.flat_map(lambda _: self.data_provider(self.get_current_page() - 1, self.get_page_size())),
             operators.do_action(lambda page_data: self.__set_max_page_num(math.ceil(page_data.get_total() / self.get_page_size()))),
+            operators.do_action(lambda _: prev_button.config(state = NORMAL if self.get_current_page() > 1 else DISABLED)),
+            operators.do_action(lambda _: next_button.config(state = NORMAL if self.get_current_page() < self.get_max_page_num() else DISABLED)),
             operators.do_action(lambda _: num_label.configure(text = "Page: {}/{}".format(self.get_current_page(), self.get_max_page_num()))),
             operators.flat_map(lambda page_data: reactivex.from_iterable(page_data.get_data())),
             operators.do_action(lambda data: self.column_provider(data))
-        ).subscribe()
-
-        load_subject.pipe(
-            operators.do_action(lambda _: prev_button.config(state = NORMAL if self.get_current_page() > 1 else DISABLED)),
-            operators.do_action(lambda _: next_button.config(state = NORMAL if self.get_current_page() < self.get_max_page_num() else DISABLED))
         ).subscribe()
 
         pagination_frame.display_frame()
