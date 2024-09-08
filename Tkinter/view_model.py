@@ -240,7 +240,7 @@ class OrderCreateEntity:
             return f"Product Id:\t{self.get_product_id()}\tProduct Name:\t{self.get_product_name()}\nProduct Num:\t{self.get_product_num()}\tProduct Price:\t{self.get_product_price()}\nSub Total:\t{self.get_product_sub_total()}"
         
         def text_print_on_cell(self) -> None:
-            return f"Product Name: {self.get_product_name()}, Product Num: {self.get_product_num()}, Product Price: {self.get_product_price()},S ub Total: {self.get_product_sub_total()}"
+            return f"Product Name: {self.get_product_name()}, Product Num: {self.get_product_num()}, Product Price: {self.get_product_price()}, Sub Total: {self.get_product_sub_total()}"
     
     def __init__(self) -> None:
         self.__customer: OrderCreateEntity.OrderCustomerEntity = None
