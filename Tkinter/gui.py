@@ -3,7 +3,7 @@ from tkinter import Frame, Label, messagebox
 from typing import TypeVar, Callable, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
-import handler
+from handler import *
 from decimal import Decimal
 from base_gui_compnent import *
 from view_model import *
@@ -72,7 +72,7 @@ class ReactiveListCustomerButton(AbstractMenuButton):
         class Table(PageableTreeTable[CustomerViewEntity]):
 
             def data_provider(self, page: int, page_size: int) -> Observable[Page[CustomerViewEntity]]:
-                return handler.page_customers(entity, page, page_size)
+                return HandlerRegstation.get_company_hanlder().page_customers(entity, page, page_size)
             
             def column_provider(self, data: CustomerViewEntity) -> None:
                 self.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_customer_balance()))
@@ -116,7 +116,7 @@ class ReactiveListProductButton(AbstractMenuButton):
         class Table(PageableTreeTable[ProductViewEntity]):
 
             def data_provider(self, page: int, page_size: int) -> Observable[Page[ProductViewEntity]]:
-                return handler.page_products(entity, page, page_size)
+                return HandlerRegstation.get_company_hanlder().page_products(entity, page, page_size)
             
             def column_provider(self, data: ProductViewEntity) -> None:
                 return self.insert("", "end", values = (data.get_product_id(), data.get_product_name(), data.get_product_price()))
@@ -160,7 +160,7 @@ class ReactiveListOrdersButton(AbstractMenuButton):
         class Table(PageableTreeTable[OrderViewEntity]):
 
             def data_provider(self, page: int, page_size: int) -> Observable[Page[OrderViewEntity]]:
-                return handler.page_orders(entity, page, page_size)
+                return HandlerRegstation.get_company_hanlder().page_orders(entity, page, page_size)
             
             def column_provider(self, data: OrderViewEntity) -> None:
                 self.insert("", "end", values = (
@@ -204,7 +204,7 @@ class ReactiveListPaymentsButton(AbstractMenuButton):
         class Table(PageableTreeTable[PaymentViewEneity]):
 
             def data_provider(self, page: int, page_size: int) -> Observable[Page[PaymentViewEneity]]:
-                return handler.page_payments(entity, page, page_size)
+                return HandlerRegstation.get_company_hanlder().page_payments(entity, page, page_size)
             
             def column_provider(self, data: PaymentViewEneity) -> None:
                 self.insert("", "end", values = (data.get_customer_id(), data.get_customer_name(), data.get_payment_amount(), data.get_payment_date()))
@@ -253,21 +253,21 @@ class CreateOrderFrame(BaseFrame):
 
         label = Label(customer_select_frame, text = "Please select a customer :")
         label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: handler.all_customers())
+        customer_select_box = PrefixSearchCombobox[CustomerViewEntity](customer_select_frame, lambda: HandlerRegstation.get_company_hanlder().all_customers())
         customer_select_box.get_load_subject().on_next(None)
         customer_text_box = BaseTextBox(customer_show_frame)
         
         customer_select_box.get_selected_subject().pipe(
             operators.do_action(lambda item: entity.set_customer(item.get_customer_id(), item.get_customer_name(), item.get_customer_balance())),
             operators.do_action(lambda item: payment_entity.set_customer_id(item.get_customer_id())),
-            operators.flat_map(lambda item: handler.customer_detail(item.get_customer_id())),
+            operators.flat_map(lambda item: HandlerRegstation.get_company_hanlder().customer_detail(item.get_customer_id())),
             operators.do_action(lambda item: customer_text_box.replace_text(item.text_print_on_text_box())),
             operators.filter(lambda _: entity.is_reay_for_submit())
         ).subscribe(self.__enable_submit_subject)
 
         self.get_submit_subject().pipe(
             operators.do_action(lambda _: customer_select_box.config(state = DISABLED)),
-            operators.flat_map(lambda _: handler.customer_detail(entity.get_customer().get_customer_id())),
+            operators.flat_map(lambda _: HandlerRegstation.get_company_hanlder().customer_detail(entity.get_customer().get_customer_id())),
         ).subscribe(lambda item: customer_text_box.replace_text(item.text_print_on_text_box()))
 
 
@@ -286,7 +286,7 @@ class CreateOrderFrame(BaseFrame):
 
         product_label = Label(product_select_frame_1, text = "Please select a product :")
         product_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame_1, lambda: handler.all_products())
+        product_select_box = PrefixSearchCombobox[ProductViewEntity](product_select_frame_1, lambda: HandlerRegstation.get_company_hanlder().all_products())
         product_select_box.get_load_subject().on_next(None)
         product_num_label = Label(product_select_frame_1, text = "Please select quantity :")
         product_num_label.pack(side = TOP, padx = 10, pady = 10, anchor = W)
@@ -370,7 +370,7 @@ class CreateOrderFrame(BaseFrame):
 
         submit_button.get_button_subject().pipe(
             operators.filter(lambda _: entity.is_reay_for_submit()),
-            operators.flat_map(lambda _: handler.create_new_order(entity)),
+            operators.flat_map(lambda _: HandlerRegstation.get_company_hanlder().create_new_order(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: submit_button.config(state = DISABLED)),
             operators.do_action(lambda _: pay_button.config(state = NORMAL)),
@@ -379,7 +379,7 @@ class CreateOrderFrame(BaseFrame):
 
         pay_button.get_button_subject().pipe(
             operators.filter(lambda _: payment_entity.is_ready_for_submit()),
-            operators.flat_map(lambda _: handler.create_new_payment(payment_entity)),
+            operators.flat_map(lambda _: HandlerRegstation.get_company_hanlder().create_new_payment(payment_entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Payment Successful!"))
         ).subscribe(self.get_submit_subject())
@@ -431,7 +431,7 @@ class AddCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_customer(entity)),
+            operators.flat_map(lambda entity: HandlerRegstation.get_company_hanlder().add_customer(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Customer Added Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
@@ -488,7 +488,7 @@ class EditCustomerFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_customer(entity)),
+            operators.flat_map(lambda entity: HandlerRegstation.get_company_hanlder().edit_customer(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Customer Editted Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
@@ -550,7 +550,7 @@ class AddProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: entity),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.add_product(entity)),
+            operators.flat_map(lambda entity: HandlerRegstation.get_company_hanlder().add_product(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Product Added Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
@@ -606,7 +606,7 @@ class EditProductFrame(BaseFrame):
         submit_button.get_button_subject().pipe(
             operators.map(lambda _: data),
             operators.filter(lambda entity: entity.is_ready_for_submit()),
-            operators.flat_map(lambda entity: handler.edit_product(entity)),
+            operators.flat_map(lambda entity: HandlerRegstation.get_company_hanlder().edit_product(entity)),
             operators.filter(lambda res: res == "success"),
             operators.do_action(lambda _: messagebox.showinfo("Information", "Product Editted Successfully!"))
         ).subscribe(cancel_button.get_button_subject())
