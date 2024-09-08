@@ -15,19 +15,13 @@ T = TypeVar("T")
 ## BaseFrame will also refresh all the refreshable compnents which regisred
 class BaseFrame(Frame):
 
-    def __init__(self, parent: Frame, width: int = -1) -> None:
+    def __init__(self, parent: Frame, /, *, side: str, fill: str, expand: bool = False, width: int = -1) -> None:
         if width == -1:
             width = parent.winfo_width()
         Frame.__init__(self, parent, width = width)
-        self.__fill: str = ''
-        self.__side: str = ''
-        self.__expand: bool = False
-    
-
-    def set_frame_style(self, side: str, fill: str, expand: bool = False) -> None:
-        self.__side = side
-        self.__fill = fill
-        self.__expand = expand
+        self.__side: str = side
+        self.__fill: str = fill
+        self.__expand: bool = expand
 
     def display_frame(self) -> None:
         self.pack(fill = self.__fill, side = self.__side, expand = self.__expand)
@@ -104,8 +98,7 @@ class AbstractMenuButton(AbstractButton):
         super().__init__(parent, name, subject)
         self.__frame_holder: FrameHolder = frame_holder
         parent = frame_holder.get_base_frame()
-        compnent_frame = BaseFrame(parent)
-        compnent_frame.set_frame_style(RIGHT, BOTH, True)
+        compnent_frame = BaseFrame(parent, side = RIGHT, fill = BOTH, expand = True)
         self.render_compnent(compnent_frame)
         self.__compnent_frame: BaseFrame = compnent_frame
         subject.subscribe(lambda _: self.__click_handler_chain())
@@ -180,7 +173,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
         for col in columns:
             self.heading(col, text = col)
         
-        pagination_frame = BaseFrame(parent_frame)
+        pagination_frame = BaseFrame(parent_frame, side = TOP, fill = X, expand = False)
 
         load_subject = Subject()
         self.__load_subject: Subject = load_subject
@@ -213,7 +206,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
             operators.do_action(lambda _: next_button.config(state = NORMAL if self.get_current_page() < self.get_max_page_num() else DISABLED))
         ).subscribe()
 
-        pagination_frame.pack(side = TOP, fill = X)
+        pagination_frame.display_frame()
         
         self.tooltip_window: PageableTreeTable.TreeViewToolTip = None
 
@@ -292,7 +285,7 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 class LabelEntryPair(BaseFrame):
     
     def __init__(self, parent: Frame, label_name: str, /, *, anchor: str = W, default_value: str = "", editable: bool= True, width: int = -1) -> None:
-        BaseFrame.__init__(self, parent, width = width)
+        BaseFrame.__init__(self, parent, side = TOP, fill = X, expand = True, width = width)
         input_subject = Subject()
         self.__input_subject: Subject = input_subject
         self.draw_compnent(label_name, anchor, default_value, editable, input_subject)
@@ -413,14 +406,11 @@ class BaseSpinBox(Spinbox):
 class SearchBar(BaseFrame):
     
     def __init__(self, parent: Frame, label_name: str, /, *, width: int = -1) -> None:
-        BaseFrame.__init__(self, parent, width = width)
+        BaseFrame.__init__(self, parent, side = TOP, fill = X, expand = False, width = width)
         input_subject = Subject()
         self.__input_subject: Subject = input_subject
         self.draw_compnent(label_name, input_subject)
         self.display_frame()
-
-    def display_frame(self) -> None:
-        self.pack(side = TOP)
 
     def draw_compnent(self, label_name: str, input_subject: Subject) -> None:
         label = Label(self, text = label_name, width = 20)

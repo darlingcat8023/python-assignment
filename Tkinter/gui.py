@@ -27,11 +27,9 @@ class GUI(Frame):
         super().__init__(root)
         root.geometry(pixel)
         root.title(title)
-        menu_frame = BaseFrame(root, width = root.winfo_width() / 4)
-        menu_frame.set_frame_style(LEFT, Y, False)
+        menu_frame = BaseFrame(root, side = LEFT, fill = Y, expand = False, width = root.winfo_width() / 4)
         menu_frame.display_frame()
-        compnent_frame = BaseFrame(root, width = root.winfo_width() * 3 / 4)
-        compnent_frame.set_frame_style(RIGHT, BOTH, True)
+        compnent_frame = BaseFrame(root, side = RIGHT, fill = BOTH, expand = True, width = root.winfo_width() * 3 / 4)
         compnent_frame.display_frame()
         frame_holder = FrameHolder(compnent_frame)
         self.__render_menu(menu_frame, frame_holder)
@@ -226,8 +224,8 @@ class ReactiveListPaymentsButton(AbstractMenuButton):
 
 class CreateOrderFrame(BaseFrame):
 
-    def __init__(self, frame_holder: FrameHolder) -> None:
-        super().__init__(frame_holder.get_base_frame())
+    def __init__(self, frame_holder: FrameHolder, /, *, side: str, fill: str, expand: bool) -> None:
+        super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand)
         self.__enable_submit_subject = Subject()
         self.__submit_subject: Subject = Subject()
         self.draw_compnent(frame_holder)
@@ -245,14 +243,9 @@ class CreateOrderFrame(BaseFrame):
 
     def render_customer_select_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
         
-        customer_frame = BaseFrame(self)
-        customer_frame.set_frame_style(TOP, X, False)
-        
-        customer_select_frame = BaseFrame(customer_frame)
-        customer_select_frame.set_frame_style(LEFT, BOTH, True)
-        
-        customer_show_frame = BaseFrame(customer_frame)
-        customer_show_frame.set_frame_style(LEFT, BOTH, True)
+        customer_frame = BaseFrame(self, side = TOP, fill = X, expand = False)
+        customer_select_frame = BaseFrame(customer_frame, side = LEFT, fill = BOTH, expand = TRUE)
+        customer_show_frame = BaseFrame(customer_frame, side = LEFT, fill = BOTH, expand = TRUE)
         
         customer_frame.display_frame()
         customer_select_frame.display_frame()
@@ -280,17 +273,11 @@ class CreateOrderFrame(BaseFrame):
 
     def render_product_select_area(self, entity: OrderCreateEntity) -> None:
         
-        product_frame = BaseFrame(self)
-        product_frame.set_frame_style(TOP, X, False)
+        product_frame = BaseFrame(self, side = TOP, fill = X, expand = False)
 
-        product_select_frame = BaseFrame(product_frame)
-        product_select_frame.set_frame_style(LEFT, BOTH, True)
-        
-        product_select_frame_1 = BaseFrame(product_select_frame)
-        product_select_frame_1.set_frame_style(LEFT, BOTH, True)
-        
-        product_show_frame = BaseFrame(product_frame)
-        product_show_frame.set_frame_style(LEFT, BOTH, True)
+        product_select_frame = BaseFrame(product_frame, side = LEFT, fill = BOTH, expand = True)
+        product_select_frame_1 = BaseFrame(product_select_frame, side = LEFT, fill = BOTH, expand = True)
+        product_show_frame = BaseFrame(product_frame, side = LEFT, fill = BOTH, expand = True)
         
         product_frame.display_frame()
         product_select_frame.display_frame()
@@ -342,8 +329,7 @@ class CreateOrderFrame(BaseFrame):
         ).subscribe()
 
     def render_payment_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
-        payment_frame = BaseFrame(self)
-        payment_frame.set_frame_style(TOP, X, False)
+        payment_frame = BaseFrame(self, side = TOP, fill = X, expand = False)
         payment_frame.display_frame()
         
         class PaymentEntry(LabelEntryPair):
@@ -367,8 +353,7 @@ class CreateOrderFrame(BaseFrame):
         self.get_submit_subject().subscribe(lambda _: payment_entry.enable_input())
     
     def render_option_area(self, entity: OrderCreateEntity, payment_entity: PaymentCreateEntity) -> None:
-        option_frame = BaseFrame(self)
-        option_frame.set_frame_style(TOP, BOTH, True)
+        option_frame = BaseFrame(self, side = TOP, fill = BOTH, expand = TRUE)
         option_frame.display_frame()
 
         class OperateButton(OptionButton):
@@ -408,9 +393,7 @@ class ReactiveCreateNewOrderButton(AbstractMenuButton):
         self.pack(side = TOP, fill = X, padx = 10, pady = 10)
 
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = CreateOrderFrame(self.get_frame_holder())
-        new_frame.set_frame_style(RIGHT, BOTH, True)
-        return new_frame
+        return CreateOrderFrame(self.get_frame_holder(), side = RIGHT, fill = BOTH, expand = True)
 
     def render_compnent(self, frame: BaseFrame) -> None:
         pass
@@ -418,8 +401,8 @@ class ReactiveCreateNewOrderButton(AbstractMenuButton):
 
 class AddCustomerFrame(BaseFrame):
 
-    def __init__(self, frame_holder: FrameHolder, callback: Subject, width: int = -1) -> None:
-        super().__init__(frame_holder.get_base_frame(), width)
+    def __init__(self, frame_holder: FrameHolder, callback: Subject, /, *, side: str, fill: str, expand: bool, width: int = -1) -> None:
+        super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand, width = width)
         self.draw_compnent(frame_holder, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, callback: Subject) -> None:
@@ -468,9 +451,7 @@ class ReactiveAddCustomerButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = AddCustomerFrame(self.get_frame_holder(),  self.__callback_subject)
-        new_frame.set_frame_style(RIGHT, BOTH, True)
-        return new_frame
+        return AddCustomerFrame(self.get_frame_holder(), self.__callback_subject, side = RIGHT, fill = BOTH, expand = True)
 
     def render_compnent(self, frame: BaseFrame) -> None:
         pass
@@ -478,8 +459,8 @@ class ReactiveAddCustomerButton(AbstractMenuButton):
 
 class EditCustomerFrame(BaseFrame):
 
-    def __init__(self, frame_holder: FrameHolder, data: CustomerViewEntity, callback: Subject, width: int = -1) -> None:
-        super().__init__(frame_holder.get_base_frame(), width)
+    def __init__(self, frame_holder: FrameHolder, data: CustomerViewEntity, callback: Subject, /, *, side: str, fill: str, expand: bool, width: int = -1) -> None:
+        super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand, width = width)
         self.draw_compnent(frame_holder, data, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, data: CustomerViewEntity, callback: Subject) -> None:
@@ -528,9 +509,7 @@ class ReactiveEditCustomerButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = EditCustomerFrame(self.get_frame_holder(), self.__customer_view, self.__callback_subject)
-        new_frame.set_frame_style(RIGHT, BOTH, True)
-        return new_frame
+        return EditCustomerFrame(self.get_frame_holder(), self.__customer_view, self.__callback_subject, side = RIGHT, fill = BOTH, expand = True)
     
     def set_data_to_edit(self, data: CustomerViewEntity) -> None:
         self.__customer_view = data
@@ -541,8 +520,8 @@ class ReactiveEditCustomerButton(AbstractMenuButton):
 
 class AddProductFrame(BaseFrame):
 
-    def __init__(self, frame_holder: FrameHolder, callback: Subject, width: int = -1) -> None:
-        super().__init__(frame_holder.get_base_frame(), width)
+    def __init__(self, frame_holder: FrameHolder, callback: Subject, /, *, side: str, fill: str, expand: bool, width: int = -1) -> None:
+        super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand, width = width)
         self.draw_compnent(frame_holder, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, callback: Subject) -> None:
@@ -591,17 +570,15 @@ class ReactiveAddProductButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = AddProductFrame(self.get_frame_holder(),  self.__callback_subject)
-        new_frame.set_frame_style(RIGHT, BOTH, True)
-        return new_frame
+        return AddProductFrame(self.get_frame_holder(), self.__callback_subject, side = RIGHT, fill = BOTH, expand = True)
 
     def render_compnent(self, frame: BaseFrame) -> None:
         pass
 
 class EditProductFrame(BaseFrame):
         
-    def __init__(self, frame_holder: FrameHolder, data: ProductViewEntity, callback: Subject, width: int = -1) -> None:
-        super().__init__(frame_holder.get_base_frame(), width)
+    def __init__(self, frame_holder: FrameHolder, data: ProductViewEntity, callback: Subject, /, *, side: str, fill: str, expand: bool, width: int = -1) -> None:
+        super().__init__(frame_holder.get_base_frame(), side = side, fill = fill, expand = expand, width = width)
         self.draw_compnent(frame_holder, data, callback)
 
     def draw_compnent(self, frame_holder: FrameHolder, data: ProductViewEntity, callback: Subject) -> None:
@@ -650,9 +627,7 @@ class ReactiveEditProductButton(AbstractMenuButton):
         self.pack(side = RIGHT, padx = 10, pady = 10)
     
     def get_compnent_frame(self) -> BaseFrame:
-        new_frame = EditProductFrame(self.get_frame_holder(), self.__product_view, self.__callback_subject)
-        new_frame.set_frame_style(RIGHT, BOTH, True)
-        return new_frame
+        return EditProductFrame(self.get_frame_holder(), self.__product_view, self.__callback_subject, side = RIGHT, fill = BOTH, expand = True)
     
     def set_data_to_edit(self, data: ProductViewEntity) -> None:
         self.__product_view = data
