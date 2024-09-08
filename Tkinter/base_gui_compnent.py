@@ -374,7 +374,7 @@ class PrefixSearchCombobox(ttk.Combobox, Generic[ENT]):
     
     def set_style(self) -> None:
         self.pack(side = TOP, padx = 10, pady = 10, anchor = W)
-    
+
 
 class BaseTextBox(Text):
     
@@ -382,11 +382,6 @@ class BaseTextBox(Text):
         super().__init__(parent_frame, width = width, height = heigh, borderwidth = 5)
         self.config(state = DISABLED, font = font.Font(size = 15))
         self.pack(side = TOP, padx = 10, pady = 10)
-
-    def append_text(self, text: str) -> None:
-        self.config(state = NORMAL)
-        self.insert(END, text)
-        self.config(state = DISABLED)
 
     def replace_text(self, text: str) -> None:
         self.config(state = NORMAL)
