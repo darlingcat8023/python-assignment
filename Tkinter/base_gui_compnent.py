@@ -140,6 +140,19 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
         def display_button(self) -> None:
             self.pack(side = LEFT)
 
+    
+    class TreeViewToolTip(Toplevel):
+
+        def __init__(self, master: Misc) -> None:
+            super().__init__(master)
+            self.wm_overrideredirect(True)
+            self.tooltip_label = Label(self, fg = "black", background = "white", borderwidth = 1, relief = SOLID)
+            self.tooltip_label.pack()
+
+        def set_text(self, text: str) -> None:
+            self.tooltip_label.config(text = text)
+        
+
     def get_page_size(self) -> int:
         return self.__page_size;
 
@@ -171,6 +184,11 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
         load_subject = Subject()
         self.__load_subject: Subject = load_subject
+        selected_subject = Subject()
+        self.__selected_subject: Subject = selected_subject
+        motion_subject = Subject()
+        self.__motion_subject: Subject = motion_subject
+        leave_subject: Subject = Subject()
         
         prev_button = PageableTreeTable.PageButton(pagination_frame, "prev", Subject())
         prev_button.get_button_subject().pipe(operators.do_action(lambda e: self.back_page())).subscribe(load_subject)
@@ -197,12 +215,30 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
 
         pagination_frame.pack(side = TOP, fill = X)
         
-        self.__selected_subject: Subject = Subject()
+        self.tooltip_window: PageableTreeTable.TreeViewToolTip = None
+
+        motion_subject.pipe(
+            operators.flat_map(lambda event: motion_subject.pipe(
+                operators.map(lambda _: self.identify_row(event.y)),
+                operators.filter(lambda row: row is not None),
+                operators.map(lambda row: self.item(row, "values")),
+                operators.filter(lambda tuple: tuple is not None and len(tuple) > 0),
+                operators.map(lambda tuple: self.on_motion_show(tuple)),
+                operators.filter(lambda text: text is not None and len(text) > 0),
+                operators.do_action(lambda _: self.__set_tooltip() if self.tooltip_window is None else None),
+                operators.do_action(lambda text: self.tooltip_window.set_text(text)),
+                operators.do_action(lambda _: self.tooltip_window.wm_geometry(f"+{event.x_root + 10}+{event.y_root + 10}"))
+            ))
+        ).subscribe()
+
+        leave_subject.pipe(
+            operators.filter(lambda _: self.tooltip_window is not None),
+            operators.do_action(lambda _: self.tooltip_window.destroy())
+        ).subscribe(lambda _: self.__reset_tooltip())
         
-        self.tooltip_window = None
-        self.bind("<<TreeviewSelect>>", self.__on_selection)
-        self.bind("<Motion>", self.__on_motion)
-        self.bind("<Leave>", self.__on_leave)
+        self.bind("<<TreeviewSelect>>", lambda _: selected_subject.on_next(self.instance_provider(self.item(self.selection()[0], 'values')) if self.selection() is not None else None))
+        self.bind("<Motion>", lambda event: motion_subject.on_next(event))
+        self.bind("<Leave>", lambda _: leave_subject.on_next(None))
         self.set_style()
 
     def set_style(self) -> None:
@@ -233,34 +269,11 @@ class PageableTreeTable(ttk.Treeview, Generic[T], ABC):
     def on_motion_show(self, tuple: Tuple[str]) -> str:
         return None
 
-    def __on_selection(self, event: Event) -> None:
-        selected_items = self.selection()
-        if selected_items:
-            self.__selected_subject.on_next(self.instance_provider(self.item(selected_items[0], 'values')))
+    def __reset_tooltip(self):
+        self.tooltip_window = None
 
-    def __on_motion(self, event):
-        row_id = self.identify_row(event.y)
-        if row_id is None:
-            self.__hide_tooltip()
-            return
-        data = self.on_motion_show(self.instance_provider(self.item(row_id, "values")))
-        if data is None or len(data) < 1:
-            return
-        if not self.tooltip_window:
-            self.tooltip_window = Toplevel(self)
-            self.tooltip_window.wm_overrideredirect(True)
-            self.tooltip_label = Label(self.tooltip_window, fg = "black", background = "white", borderwidth = 1, relief = SOLID)
-            self.tooltip_label.pack()
-        self.tooltip_label.config(text = data)
-        self.tooltip_window.wm_geometry(f"+{event.x_root + 10}+{event.y_root + 10}")
-
-    def __hide_tooltip(self):
-        if self.tooltip_window:
-            self.tooltip_window.destroy()
-            self.tooltip_window = None
-
-    def __on_leave(self, event):
-        self.__hide_tooltip()
+    def __set_tooltip(self):
+        self.tooltip_window = PageableTreeTable.TreeViewToolTip(self)
     
     def get_load_subject(self) -> Subject:
         return self.__load_subject

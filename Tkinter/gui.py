@@ -173,7 +173,7 @@ class ReactiveListOrdersButton(AbstractMenuButton):
                 ))
 
             def instance_provider(self, tuple: Tuple[str]) -> OrderViewEntity:
-                return tuple
+                return None
             
             def on_motion_show(self, tuple: Tuple[str]) -> str:
                 return tuple[5]
