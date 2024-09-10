@@ -128,3 +128,4 @@ class HandlerRegstation:
     @staticmethod
     def get_company_hanlder() -> CompanyHanlder:
         return HandlerRegstation.__company_handler
+    
