@@ -3,6 +3,8 @@ from tkinter import Frame, Label, messagebox
 from typing import TypeVar, Callable, Tuple
 from reactivex import operators, Observable
 from reactivex.subject import *
+from page import Page
+from view_model import CustomerViewEntity
 from handler import *
 from decimal import Decimal
 from base_gui_compnent import *
@@ -41,7 +43,7 @@ class GUI(Frame):
         ReactiveListPaymentsButton(menu_frame, "List All Payments", frame_holder, Subject())
         ReactiveListOrdersButton(menu_frame, "List All Orders", frame_holder, Subject())
         ReactiveCreateNewOrderButton(menu_frame, "Create New Order", frame_holder, Subject())
-        
+
 
 class ReactiveMainButton(AbstractMenuButton):
 
